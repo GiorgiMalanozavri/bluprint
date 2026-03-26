@@ -657,6 +657,17 @@ export function PlannerBoard({ entries, setEntries, recommendations, editable = 
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(() => weekMonday(new Date()));
+  const [showCalPanel, setShowCalPanel] = useState(false);
+  const calPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showCalPanel) return;
+    const handler = (e: MouseEvent) => {
+      if (calPanelRef.current && !calPanelRef.current.contains(e.target as Node)) setShowCalPanel(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showCalPanel]);
 
   const weekDates = useMemo(() => Array.from({ length: 5 }, (_, i) => addDays(weekStart, i)), [weekStart]);
 
@@ -696,6 +707,25 @@ export function PlannerBoard({ entries, setEntries, recommendations, editable = 
               </div>
             );
           })}
+          <div className="relative" ref={calPanelRef}>
+            <button onClick={() => setShowCalPanel(o => !o)}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] transition-all">
+              <Calendar size={13} /> Sync
+            </button>
+            <AnimatePresence>
+              {showCalPanel && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-full mt-2 z-[100] w-72"
+                >
+                  <CalendarIntegrationPanel entries={entries} setEntries={setEntries} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
+
+// ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const experienceSchema = z.object({
   title: z.string().default(""),
@@ -98,33 +99,55 @@ type Roadmap = z.infer<typeof roadmapSchema>;
 type CVAnalysis = z.infer<typeof cvAnalysisSchema>;
 type JobAnalysis = z.infer<typeof jobAnalysisSchema>;
 
-class AIClient {
-  private model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]> | null = null;
+// ─── AI Client (GitHub Models — OpenAI-compatible) ───────────────────────────
 
-  private getModel() {
-    if (this.model) return this.model;
-    if (!process.env.GEMINI_API_KEY) {
-      return null;
-    }
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+const GITHUB_MODELS_URL = "https://models.inference.ai.azure.com/chat/completions";
+
+class AIClient {
+  private getToken() {
+    return process.env.GITHUB_MODELS_TOKEN || null;
+  }
+
+  private getModelName() {
+    return process.env.GITHUB_MODELS_MODEL || "gpt-4o-mini";
+  }
+
+  private async callModel(prompt: string, jsonMode = true): Promise<string> {
+    const token = this.getToken();
+    if (!token) throw new Error("AI not configured — set GITHUB_MODELS_TOKEN");
+
+    const res = await fetch(GITHUB_MODELS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        model: this.getModelName(),
+        messages: [
+          ...(jsonMode ? [{ role: "system", content: "You are a helpful assistant. Always respond with valid JSON only, no markdown fences or extra text." }] : []),
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.4,
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+      }),
     });
-    return this.model;
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("GitHub Models API error:", res.status, err);
+      throw new Error(`AI API error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content?.trim() || "";
   }
 
   private async generateStructured<T>(prompt: string, schema: z.ZodSchema<T>): Promise<T> {
-    const model = this.getModel();
-    if (!model) throw new Error("AI not configured");
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.4,
-      },
-    });
-    const text = result.response.text().trim();
-    const parsed = JSON.parse(text);
+    const text = await this.callModel(prompt, true);
+    // Strip markdown fences if model wraps in ```json
+    const clean = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+    const parsed = JSON.parse(clean);
     return schema.parse(parsed);
   }
 
@@ -135,6 +158,12 @@ Extract a structured student profile from this CV text.
 Return missing information as empty strings or empty arrays.
 Set flaggedFields to any fields you are less than 75% confident about.
 Never invent high-specificity facts.
+
+Return a JSON object with these fields:
+name, university, degree, yearOfStudy, graduating, studentType, dreamRole, targetIndustries,
+experiences (array of {title, company, duration, bullets[]}),
+education (array of {degree, institution, years, grade}),
+skills (string[]), extracurriculars (string[]), languages (string[]), flaggedFields (string[])
 
 CV TEXT:
 ${rawText}
@@ -150,19 +179,22 @@ You are generating a practical career roadmap for a university student.
 Use this confirmed profile:
 ${JSON.stringify(profile)}
 
-Return:
-- 4 semesters minimum
-- each semester with status and task objects
-- monthlyTasks for the current month
-- cvScore from 0 to 100
-- strengths, improvements, missing
-- one concise nudge for the dashboard
+Return a JSON object with:
+- semesters: array of {semester: string, status: "completed"|"current"|"upcoming", tasks: [{id, title, category, effort, why}]}
+- monthlyTasks: array of {id, title, category, effort, why}
+- cvScore: number 0-100
+- strengths: string[]
+- improvements: string[]
+- missing: string[]
+- nudge: string (one concise sentence for the dashboard)
 
 Rules:
+- 4 semesters minimum
 - tasks must be specific and realistic for a student
-- categories should be from INTERNSHIP, CV, NETWORKING, ACADEMICS, VISA, SKILLS
+- categories from: INTERNSHIP, CV, NETWORKING, ACADEMICS, VISA, SKILLS
 - effort should be short plain English like "30 mins" or "2 hours"
 - why should explain timing/strategy
+- ids should be unique strings like "t1", "t2", etc.
       `,
       roadmapSchema
     );
@@ -179,7 +211,14 @@ ${JSON.stringify(profile)}
 CV:
 ${resumeText}
 
-Return a score, summary, strengths, improvements, missing items, and rewrite suggestions.
+Return a JSON object with:
+- score: number 0-100
+- summary: string (2-3 sentence overview)
+- strengths: string[] (what's good)
+- improvements: string[] (what to fix)
+- missing: string[] (what's not there but should be)
+- rewrites: array of {section, original, suggested, reason}
+
 Focus on specificity and usefulness, not generic advice.
       `,
       cvAnalysisSchema
@@ -197,8 +236,15 @@ ${JSON.stringify(profile)}
 JOB DESCRIPTION:
 ${jobDescription}
 
-Return a realistic match score, what they already meet, the gaps, a short action plan,
-and a tailored summary plus tailored bullets for their CV.
+Return a JSON object with:
+- matchScore: number 0-100
+- metRequirements: string[] (what they already meet)
+- gaps: string[] (what they're missing)
+- actionPlan: string[] (specific steps to close gaps)
+- tailoredSummary: string (a CV summary tailored to this job)
+- tailoredBullets: string[] (rewritten CV bullets for this job)
+
+Be realistic about the match score.
       `,
       jobAnalysisSchema
     );
@@ -211,7 +257,7 @@ and a tailored summary plus tailored bullets for their CV.
       if (pageCtx) {
         pageHint = `\n\nPAGE CONTEXT (user is currently viewing: ${pageCtx.page}):\n${JSON.stringify(pageCtx.data || {})}`;
         if (pageCtx.page === "planner") {
-          pageHint += "\nThe user is on their weekly calendar/planner. They can see their schedule and coursework. Help with scheduling, study planning, and time management.";
+          pageHint += "\nThe user is on their weekly calendar/planner. Help with scheduling, study planning, and time management.";
         } else if (pageCtx.page === "cv-analyzer") {
           pageHint += "\nThe user is on their CV/resume page. Help with resume improvements, bullet writing, and career positioning.";
         } else if (pageCtx.page === "roadmap") {
@@ -239,12 +285,15 @@ ${JSON.stringify(context.history || [])}
 
 USER MESSAGE:
 ${message}
+
+Return a JSON object with a single field: { "reply": "your response here" }
       `,
         assistantReplySchema
       );
       return response.reply;
-    } catch {
-      return "Start with the highest leverage task first: tighten your CV bullets, then reach out to a few relevant alumni. That will make the rest of the week easier.";
+    } catch (e) {
+      console.error("Chat error:", e);
+      return "I'm having trouble connecting right now. Try again in a moment.";
     }
   }
 }

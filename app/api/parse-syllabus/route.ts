@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const GITHUB_MODELS_URL = "https://models.inference.ai.azure.com/chat/completions";
 
 export async function POST(req: Request) {
   try {
@@ -32,13 +33,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ items: [] });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    const token = process.env.GITHUB_MODELS_TOKEN;
+    if (!token) {
       return NextResponse.json({ error: "AI not configured" }, { status: 500 });
     }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `Extract all homework assignments, exams, quizzes, projects, and readings with their due dates from this syllabus for the course "${courseName}".
 
@@ -52,16 +50,36 @@ Only return the JSON array, no other text. If you can't find any items, return [
 Syllabus text:
 ${text.slice(0, 8000)}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const res = await fetch(GITHUB_MODELS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        model: process.env.GITHUB_MODELS_MODEL || "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a helpful assistant. Respond with valid JSON only." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+      }),
+    });
 
-    // Extract JSON from response
-    const jsonMatch = response.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      return NextResponse.json({ items: [] });
+    if (!res.ok) {
+      console.error("GitHub Models API error:", res.status, await res.text());
+      return NextResponse.json({ error: "AI API error" }, { status: 500 });
     }
 
-    const items = JSON.parse(jsonMatch[0]);
+    const data = await res.json();
+    const responseText = data.choices?.[0]?.message?.content?.trim() || "[]";
+
+    // Extract JSON array from response
+    const clean = responseText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+    const parsed = JSON.parse(clean);
+    const items = Array.isArray(parsed) ? parsed : parsed.items || [];
+
     return NextResponse.json({ items });
   } catch (err: unknown) {
     console.error("Syllabus parsing failed:", err);
