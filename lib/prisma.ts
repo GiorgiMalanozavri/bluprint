@@ -1,16 +1,26 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | null };
+const globalForPrisma = globalThis as unknown as { _prisma: PrismaClient | null; _prismaChecked: boolean };
 
-function createPrismaClient(): PrismaClient | null {
-  if (!process.env.DATABASE_URL) return null;
+function getPrismaClient(): PrismaClient | null {
+  if (globalForPrisma._prismaChecked) return globalForPrisma._prisma;
+  globalForPrisma._prismaChecked = true;
+
+  if (!process.env.DATABASE_URL) {
+    globalForPrisma._prisma = null;
+    return null;
+  }
+
   try {
-    return new PrismaClient();
+    // Lazy require to avoid crash when DATABASE_URL is missing
+    const { PrismaClient: PC } = require("@prisma/client");
+    const client = new PC();
+    globalForPrisma._prisma = client;
+    return client;
   } catch {
+    globalForPrisma._prisma = null;
     return null;
   }
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production" && prisma) globalForPrisma.prisma = prisma;
+export const prisma = getPrismaClient();
