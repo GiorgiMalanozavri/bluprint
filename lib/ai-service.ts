@@ -24,7 +24,7 @@ export const extractedProfileSchema = z.object({
   graduating: z.string().default(""),
   studentType: z.string().default("Domestic"),
   dreamRole: z.string().default(""),
-  targetIndustries: z.string().default(""),
+  targetIndustries: z.union([z.string(), z.array(z.string()).transform(a => a.join(", "))]).default(""),
   experiences: z.array(experienceSchema).default([]),
   education: z.array(educationSchema).default([]),
   skills: z.array(z.string()).default([]),
