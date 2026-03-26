@@ -8,6 +8,20 @@ export async function GET() {
   try {
     const { appUser } = await requireAppUser();
 
+    if (!prisma) {
+      return NextResponse.json({
+        profile: null,
+        cvUpload: null,
+        roadmap: null,
+        chatThreads: [],
+        user: {
+          id: appUser.id,
+          name: appUser.name,
+          email: appUser.email,
+        },
+      });
+    }
+
     const [profile, latestUpload, latestRoadmap, threads] = await Promise.all([
       prisma.studentProfile.findUnique({ where: { userId: appUser.id } }),
       prisma.cVUpload.findFirst({ where: { userId: appUser.id }, orderBy: { createdAt: "desc" } }),

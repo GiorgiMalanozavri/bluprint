@@ -11,6 +11,18 @@ export async function requireAppUser() {
     throw new Error("Unauthorized");
   }
 
+  // If no database, return a mock app user from Supabase user data
+  if (!prisma) {
+    return {
+      supabaseUser: user,
+      appUser: {
+        id: user.id,
+        email: user.email || `${user.id}@placeholder.local`,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Student",
+      },
+    };
+  }
+
   const appUser = await prisma.user.upsert({
     where: { email: user.email || `${user.id}@placeholder.local` },
     update: {

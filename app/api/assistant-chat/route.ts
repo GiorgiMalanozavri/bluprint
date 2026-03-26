@@ -17,6 +17,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
     }
 
+    if (!prisma) {
+      const reply = await aiService.chat(message, {
+        profile: null,
+        roadmap: null,
+        history: [],
+        pageContext,
+      });
+      return NextResponse.json({ threadId: "no-db", reply });
+    }
+
     const [profile, roadmap] = await Promise.all([
       prisma.studentProfile.findUnique({ where: { userId: appUser.id } }),
       prisma.roadmap.findFirst({ where: { userId: appUser.id }, orderBy: { createdAt: "desc" } }),

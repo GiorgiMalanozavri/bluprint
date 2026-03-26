@@ -15,7 +15,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Paste a full job description first." }, { status: 400 });
     }
 
-    const profile = await prisma.studentProfile.findUnique({ where: { userId: appUser.id } });
+    const profile = prisma
+      ? await prisma.studentProfile.findUnique({ where: { userId: appUser.id } })
+      : null;
     const analysis = await aiService.analyzeJobDescription(jobDescription, profile ? safeJsonParse(profile.profileJson, null) : null);
 
     return NextResponse.json(analysis);

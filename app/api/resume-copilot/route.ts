@@ -17,11 +17,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
     }
 
-    const latestUpload = await prisma.cVUpload.findFirst({
-      where: { userId: appUser.id },
-      orderBy: { createdAt: "desc" },
-    });
-    const profile = await prisma.studentProfile.findUnique({ where: { userId: appUser.id } });
+    let latestUpload = null;
+    let profile = null;
+
+    if (prisma) {
+      latestUpload = await prisma.cVUpload.findFirst({
+        where: { userId: appUser.id },
+        orderBy: { createdAt: "desc" },
+      });
+      profile = await prisma.studentProfile.findUnique({ where: { userId: appUser.id } });
+    }
 
     if (!resumeText) {
       resumeText = latestUpload?.rawText || "";
@@ -35,23 +40,25 @@ export async function POST(req: Request) {
 
     const result = await aiService.analyzeResume(resumeText, userData);
 
-    if (latestUpload) {
-      await prisma.cVUpload.update({
-        where: { id: latestUpload.id },
-        data: { analysisJson: JSON.stringify(result) },
-      });
-    }
+    if (prisma) {
+      if (latestUpload) {
+        await prisma.cVUpload.update({
+          where: { id: latestUpload.id },
+          data: { analysisJson: JSON.stringify(result) },
+        });
+      }
 
-    const latestRoadmap = await prisma.roadmap.findFirst({
-      where: { userId: appUser.id },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (latestRoadmap) {
-      await prisma.roadmap.update({
-        where: { id: latestRoadmap.id },
-        data: { cvAnalysisJson: JSON.stringify(result) },
+      const latestRoadmap = await prisma.roadmap.findFirst({
+        where: { userId: appUser.id },
+        orderBy: { createdAt: "desc" },
       });
+
+      if (latestRoadmap) {
+        await prisma.roadmap.update({
+          where: { id: latestRoadmap.id },
+          data: { cvAnalysisJson: JSON.stringify(result) },
+        });
+      }
     }
 
     return NextResponse.json({

@@ -19,42 +19,44 @@ export async function POST(request: Request) {
 
     const extracted = await aiService.extractProfileFromCV(rawText);
 
-    await prisma.cVUpload.create({
-      data: {
-        userId: appUser.id,
-        fileName,
-        fileSize,
-        rawText,
-        extractedJson: JSON.stringify(extracted),
-      },
-    });
+    if (prisma) {
+      await prisma.cVUpload.create({
+        data: {
+          userId: appUser.id,
+          fileName,
+          fileSize,
+          rawText,
+          extractedJson: JSON.stringify(extracted),
+        },
+      });
 
-    await prisma.studentProfile.upsert({
-      where: { userId: appUser.id },
-      update: {
-        fullName: extracted.name,
-        university: extracted.university,
-        degree: extracted.degree,
-        yearOfStudy: extracted.yearOfStudy,
-        graduating: extracted.graduating,
-        studentType: extracted.studentType,
-        dreamRole: extracted.dreamRole,
-        targetIndustries: extracted.targetIndustries,
-        profileJson: JSON.stringify(extracted),
-      },
-      create: {
-        userId: appUser.id,
-        fullName: extracted.name,
-        university: extracted.university,
-        degree: extracted.degree,
-        yearOfStudy: extracted.yearOfStudy,
-        graduating: extracted.graduating,
-        studentType: extracted.studentType,
-        dreamRole: extracted.dreamRole,
-        targetIndustries: extracted.targetIndustries,
-        profileJson: JSON.stringify(extracted),
-      },
-    });
+      await prisma.studentProfile.upsert({
+        where: { userId: appUser.id },
+        update: {
+          fullName: extracted.name,
+          university: extracted.university,
+          degree: extracted.degree,
+          yearOfStudy: extracted.yearOfStudy,
+          graduating: extracted.graduating,
+          studentType: extracted.studentType,
+          dreamRole: extracted.dreamRole,
+          targetIndustries: extracted.targetIndustries,
+          profileJson: JSON.stringify(extracted),
+        },
+        create: {
+          userId: appUser.id,
+          fullName: extracted.name,
+          university: extracted.university,
+          degree: extracted.degree,
+          yearOfStudy: extracted.yearOfStudy,
+          graduating: extracted.graduating,
+          studentType: extracted.studentType,
+          dreamRole: extracted.dreamRole,
+          targetIndustries: extracted.targetIndustries,
+          profileJson: JSON.stringify(extracted),
+        },
+      });
+    }
 
     return NextResponse.json({ profile: extracted });
   } catch (error) {
