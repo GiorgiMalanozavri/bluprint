@@ -104,7 +104,7 @@ class AIClient {
   private getModel() {
     if (this.model) return this.model;
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not set. Add it to .env.local");
+      return null;
     }
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     this.model = genAI.getGenerativeModel({
@@ -115,6 +115,7 @@ class AIClient {
 
   private async generateStructured<T>(prompt: string, schema: z.ZodSchema<T>): Promise<T> {
     const model = this.getModel();
+    if (!model) throw new Error("AI not configured");
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
