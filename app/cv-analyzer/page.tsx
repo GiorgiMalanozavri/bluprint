@@ -21,6 +21,31 @@ export default function CVAnalyzerPage() {
     const load = async () => {
       const response = await fetch("/api/bootstrap");
       const result = await response.json();
+
+      // Fallback to localStorage if API returns no data
+      if (!result.roadmap && !result.profile) {
+        const localProfile = localStorage.getItem("bluprint_profile_review");
+        const localFullRoadmap = localStorage.getItem("bluprint_full_roadmap");
+
+        if (localProfile) {
+          result.profile = JSON.parse(localProfile);
+        }
+        if (localFullRoadmap) {
+          const full = JSON.parse(localFullRoadmap);
+          result.roadmap = {
+            semesters: full.semesters || [],
+            monthlyTasks: full.monthlyTasks || [],
+            cvAnalysis: {
+              score: full.cvScore || 0,
+              strengths: full.strengths || [],
+              improvements: full.improvements || [],
+              missing: full.missing || [],
+              summary: full.nudge || "",
+            },
+          };
+        }
+      }
+
       setData(result);
       setLoading(false);
     };

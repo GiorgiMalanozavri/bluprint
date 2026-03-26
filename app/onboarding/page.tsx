@@ -131,10 +131,10 @@ export default function OnboardingPage() {
       const extracted = await extractResponse.json();
       if (!extractResponse.ok) throw new Error(extracted.error || "Failed to extract profile");
 
-      setProfile({
-        ...emptyProfile,
-        ...extracted.profile,
-      });
+      const mergedProfile = { ...emptyProfile, ...extracted.profile };
+      setProfile(mergedProfile);
+      localStorage.setItem("bluprint_profile_review", JSON.stringify(mergedProfile));
+      localStorage.setItem("bluprint_cv_raw_text", parsed.text);
       setStep(3);
       setLoadingIndex(0);
     } catch (err) {
@@ -162,6 +162,7 @@ export default function OnboardingPage() {
       localStorage.setItem("bluprint_onboarding_complete", "true");
       localStorage.setItem("bluprint_profile_review", JSON.stringify(profile));
       localStorage.setItem("bluprint_ai_roadmap", JSON.stringify(result.semesters || []));
+      localStorage.setItem("bluprint_full_roadmap", JSON.stringify(result));
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to build roadmap.");

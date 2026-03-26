@@ -43,6 +43,38 @@ export default function DashboardPage() {
         router.push("/sign-in");
         return;
       }
+
+      // Fallback to localStorage if API returns no data (Vercel has no DB)
+      if (!result.roadmap && !result.profile) {
+        const localProfile = localStorage.getItem("bluprint_profile_review");
+        const localRoadmap = localStorage.getItem("bluprint_ai_roadmap");
+        const localFullRoadmap = localStorage.getItem("bluprint_full_roadmap");
+
+        if (localProfile) {
+          result.profile = JSON.parse(localProfile);
+        }
+        if (localFullRoadmap) {
+          const full = JSON.parse(localFullRoadmap);
+          result.roadmap = {
+            semesters: full.semesters || [],
+            monthlyTasks: full.monthlyTasks || [],
+            cvAnalysis: {
+              score: full.cvScore || 0,
+              strengths: full.strengths || [],
+              improvements: full.improvements || [],
+              missing: full.missing || [],
+              summary: full.nudge || "",
+            },
+          };
+        } else if (localRoadmap) {
+          result.roadmap = {
+            semesters: JSON.parse(localRoadmap),
+            monthlyTasks: [],
+            cvAnalysis: null,
+          };
+        }
+      }
+
       setData(result);
       if (result.chatThreads?.[0]?.id) setThreadId(result.chatThreads[0].id);
       const saved = localStorage.getItem("bluprint_completed_tasks") || localStorage.getItem("foundry_completed_tasks");
