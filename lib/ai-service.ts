@@ -203,23 +203,32 @@ Rules:
   async analyzeResume(resumeText: string, profile: unknown): Promise<CVAnalysis> {
     return await this.generateStructured(
       `
-Analyze this student CV for their target role.
+You are a senior recruiter at a top company reviewing a student's CV. Be brutally honest and specific.
 
-PROFILE:
+CRITICAL RULES:
+- ONLY comment on things that are ACTUALLY in the CV text below. Do NOT hallucinate or assume content.
+- NEVER suggest adding sections that are non-standard for the field (no "personal statements", "soft skills sections", "target industries" on CVs).
+- Before saying "add metrics", CHECK if the CV already has numbers/percentages. If it does, acknowledge that.
+- Every strength must quote or reference a SPECIFIC line/bullet from the CV.
+- Every improvement must reference a SPECIFIC bullet or section that exists and explain exactly what's wrong with it.
+- Every "missing" item must be something genuinely expected for this person's target role and field that is NOT anywhere in the CV.
+- Rewrites: only rewrite bullets that ACTUALLY EXIST in the CV. The "original" field must be a real quote from the CV text.
+- Do NOT give generic career advice. Only give CV formatting/content feedback.
+- Be field-aware: engineering CVs don't need personal statements. Finance CVs need deal experience. CS CVs need project descriptions. etc.
+
+STUDENT PROFILE:
 ${JSON.stringify(profile)}
 
-CV:
+FULL CV TEXT:
 ${resumeText}
 
 Return a JSON object with:
-- score: number 0-100
-- summary: string (2-3 sentence overview)
-- strengths: string[] (what's good)
-- improvements: string[] (what to fix)
-- missing: string[] (what's not there but should be)
-- rewrites: array of {section, original, suggested, reason}
-
-Focus on specificity and usefulness, not generic advice.
+- score: number 0-100 (be realistic — most student CVs are 40-70)
+- summary: string (2-3 sentences, specific to THIS person)
+- strengths: string[] (specific things done well, reference actual content)
+- improvements: string[] (specific things to fix, reference actual bullets/sections)
+- missing: string[] (genuinely missing items for their target role — NOT generic advice)
+- rewrites: array of {section: string, original: string (MUST be exact quote from CV), suggested: string, reason: string}
       `,
       cvAnalysisSchema
     );
