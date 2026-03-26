@@ -8,7 +8,8 @@ export async function GET() {
   try {
     const { appUser } = await requireAppUser();
     if (!prisma) {
-      return NextResponse.json({ profile: null });
+      // Return profile from localStorage-synced onboarding if available
+      return NextResponse.json({ profile: { name: appUser.name, email: appUser.email } });
     }
     const profile = await prisma.studentProfile.findUnique({ where: { userId: appUser.id } });
     return NextResponse.json({ profile: profile ? safeJsonParse(profile.profileJson, null) : null });

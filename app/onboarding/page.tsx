@@ -68,6 +68,24 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Pre-fill name from Google auth
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { createBrowserClient } = await import("@supabase/ssr");
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.full_name) {
+          setProfile(p => ({ ...p, name: user.user_metadata.full_name }));
+        }
+      } catch { /* ignore */ }
+    };
+    fetchUser();
+  }, []);
+
   useEffect(() => {
     if (step !== 2 && step !== 4) return;
     const messages = step === 2 ? loadingMessages : roadmapMessages;
