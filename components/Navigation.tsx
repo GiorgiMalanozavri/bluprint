@@ -86,6 +86,7 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
   ];
 
   const initials = (user?.user_metadata?.full_name?.[0] || user?.email?.[0] || "U").toUpperCase();
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
 
   return (
     <>
@@ -165,7 +166,11 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
               <div className="relative" ref={dropRef}>
                 <button onClick={() => setDropdownOpen((o) => !o)}
                   className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 hover:bg-[var(--background-secondary)] transition-all duration-150">
-                  <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--accent-light)] text-xs font-semibold text-[var(--accent)]">{initials}</div>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--accent-light)] text-xs font-semibold text-[var(--accent)]">{initials}</div>
+                  )}
                   <ChevronDown size={12} className="hidden text-[var(--muted)] sm:block" />
                 </button>
                 <AnimatePresence>

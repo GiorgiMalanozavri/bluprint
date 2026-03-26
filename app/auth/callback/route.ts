@@ -1,30 +1,49 @@
-import { NextResponse } from 'next/server'
-// The client you created from the Server-Side Auth instructions
-import { createClient } from '@/utils/supabase/server'
+import { NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-    const { searchParams, origin } = new URL(request.url)
-    const code = searchParams.get('code')
-    // if "next" is in param, use it as the redirect URL
-    const next = searchParams.get('next') ?? '/'
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
 
-    if (code) {
-        const supabase = createClient()
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error) {
-            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-            const isLocalEnv = process.env.NODE_ENV === 'development'
-            if (isLocalEnv) {
-                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-                return NextResponse.redirect(`${origin}${next}`)
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
-            } else {
-                return NextResponse.redirect(`${origin}${next}`)
-            }
-        }
+  if (code) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      // Get user info from Google
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user && prisma) {
+        const meta = user.user_metadata || {};
+        const fullName = meta.full_name || meta.name || "";
+        const email = user.email || `${user.id}@placeholder.local`;
+        const avatarUrl = meta.avatar_url || meta.picture || "";
+
+        // Upsert user with Google profile data
+        await prisma.user.upsert({
+          where: { email },
+          update: {
+            name: fullName,
+            image: avatarUrl,
+          },
+          create: {
+            id: user.id,
+            email,
+            name: fullName,
+            image: avatarUrl,
+          },
+        });
+      }
+
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const isLocalEnv = process.env.NODE_ENV === "development";
+      const base = isLocalEnv ? origin : forwardedHost ? `https://${forwardedHost}` : origin;
+
+      // Redirect to onboarding for new users, dashboard for returning
+      return NextResponse.redirect(`${base}/dashboard`);
     }
+  }
 
-    // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+  return NextResponse.redirect(`${origin}/sign-in`);
 }

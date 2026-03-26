@@ -1,5 +1,5 @@
 import AuthPanel from "@/components/AuthPanel";
 
 export default function SignInPage() {
-  return <AuthPanel initialMode="login" />;
+  return <AuthPanel />;
 }
