@@ -203,18 +203,25 @@ Rules:
   async analyzeResume(resumeText: string, profile: unknown): Promise<CVAnalysis> {
     return await this.generateStructured(
       `
-You are a senior recruiter at a top company reviewing a student's CV. Be brutally honest and specific.
+You are a constructive CV coach reviewing a student's resume. Be specific and encouraging while identifying real improvements.
+
+SCORING GUIDE:
+- 85-100: Exceptional, ready for top firms
+- 70-84: Strong for a student, minor refinements
+- 55-69: Solid foundation, clear areas to improve
+- 40-54: Needs meaningful work but has potential
+- Below 40: Early stage, major gaps
 
 CRITICAL RULES:
-- ONLY comment on things that are ACTUALLY in the CV text below. Do NOT hallucinate or assume content.
-- NEVER suggest adding sections that are non-standard for the field (no "personal statements", "soft skills sections", "target industries" on CVs).
-- Before saying "add metrics", CHECK if the CV already has numbers/percentages. If it does, acknowledge that.
-- Every strength must quote or reference a SPECIFIC line/bullet from the CV.
-- Every improvement must reference a SPECIFIC bullet or section that exists and explain exactly what's wrong with it.
-- Every "missing" item must be something genuinely expected for this person's target role and field that is NOT anywhere in the CV.
-- Rewrites: only rewrite bullets that ACTUALLY EXIST in the CV. The "original" field must be a real quote from the CV text.
-- Do NOT give generic career advice. Only give CV formatting/content feedback.
-- Be field-aware: engineering CVs don't need personal statements. Finance CVs need deal experience. CS CVs need project descriptions. etc.
+- ONLY comment on things ACTUALLY in the CV text. Do NOT hallucinate or assume content.
+- NEVER suggest non-standard sections (no "personal statements", "soft skills sections", "objective statements" for technical/engineering CVs).
+- Before saying "add metrics", CHECK if numbers/percentages already exist. If they do, acknowledge that.
+- Every strength must reference SPECIFIC content from the CV.
+- Every improvement must: (1) reference a SPECIFIC bullet that exists, (2) explain what's wrong, (3) give a concrete 1-sentence fix. Format: "[Issue] → [Specific fix]"
+- Every "missing" item must explain WHY it matters for their target role and HOW to add it.
+- Rewrites: the "original" MUST be an exact quote from the CV. The "suggested" must be ready to paste into a CV — noticeably better, not vague.
+- Be field-aware: engineering CVs don't need personal statements. CS CVs need project descriptions. Finance CVs need deal/modeling experience.
+- Acknowledge what the student is doing WELL before pointing out issues.
 
 STUDENT PROFILE:
 ${JSON.stringify(profile)}
@@ -223,12 +230,12 @@ FULL CV TEXT:
 ${resumeText}
 
 Return a JSON object with:
-- score: number 0-100 (be realistic — most student CVs are 40-70)
-- summary: string (2-3 sentences, specific to THIS person)
-- strengths: string[] (specific things done well, reference actual content)
-- improvements: string[] (specific things to fix, reference actual bullets/sections)
-- missing: string[] (genuinely missing items for their target role — NOT generic advice)
-- rewrites: array of {section: string, original: string (MUST be exact quote from CV), suggested: string, reason: string}
+- score: number 0-100 (use the scoring guide above — a good student CV with projects and internships should be 60-75)
+- summary: string (2-3 sentences — lead with what's strong, then the #1 thing to fix)
+- strengths: string[] (3-5 specific things done well, reference actual content)
+- improvements: string[] (each formatted as "[Issue] → [Specific fix]", reference actual bullets)
+- missing: string[] (only genuinely missing items for their target role, each with WHY and HOW)
+- rewrites: array of {section: string, original: string (exact quote from CV), suggested: string (ready to paste), reason: string}
       `,
       cvAnalysisSchema
     );

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, ChevronDown, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon, ThumbsUp, X as XIcon, Star, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import type { MonthlyTask } from "@/components/PlannerBoard";
@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [chatMessage, setChatMessage] = useState("");
   const [threadId, setThreadId] = useState("");
   const [chatPending, setChatPending] = useState(false);
+  const [taskPrefs, setTaskPrefs] = useState<{ interested: string[]; dismissed: string[] }>({ interested: [], dismissed: [] });
 
   useEffect(() => {
     const load = async () => {
@@ -75,6 +76,53 @@ export default function DashboardPage() {
         }
       }
 
+      // Override with latest CV analysis from localStorage (if user ran analysis)
+      const localCvAnalysis = localStorage.getItem("bluprint_cv_analysis");
+      if (localCvAnalysis) {
+        const analysis = JSON.parse(localCvAnalysis);
+        if (result.roadmap) {
+          result.roadmap.cvAnalysis = analysis;
+        } else {
+          result.roadmap = { semesters: [], monthlyTasks: [], cvAnalysis: analysis };
+        }
+      }
+
+      // Load coursework items due soon as dashboard tasks
+      const localCoursework = localStorage.getItem("bluprint_coursework_v1");
+      if (localCoursework) {
+        const courses = JSON.parse(localCoursework);
+        const now = new Date();
+        const threeDays = new Date(now.getTime() + 3 * 86400000);
+        const dueSoon: any[] = [];
+        courses.forEach((c: any) => {
+          (c.items || []).forEach((item: any) => {
+            if (item.done) return;
+            if (!item.dueDate) return;
+            const due = new Date(item.dueDate);
+            if (due <= threeDays) {
+              dueSoon.push({
+                id: `cw_${item.id}`,
+                title: `${c.name}: ${item.title}`,
+                category: "COURSEWORK",
+                effort: item.type === "exam" ? "Study session" : "1-2 hours",
+                why: `Due ${due.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+                _cwCourseId: c.id,
+                _cwItemId: item.id,
+              });
+            }
+          });
+        });
+        if (result.roadmap && dueSoon.length > 0) {
+          result.roadmap.monthlyTasks = [...dueSoon, ...(result.roadmap.monthlyTasks || [])];
+        }
+      }
+
+      // Load task preferences
+      const localPrefs = localStorage.getItem("bluprint_task_preferences");
+      if (localPrefs) {
+        setTaskPrefs(JSON.parse(localPrefs));
+      }
+
       setData(result);
       if (result.chatThreads?.[0]?.id) setThreadId(result.chatThreads[0].id);
       const saved = localStorage.getItem("bluprint_completed_tasks") || localStorage.getItem("foundry_completed_tasks");
@@ -86,15 +134,50 @@ export default function DashboardPage() {
 
   const tab = searchParams.get("tab") || "overview";
   const roadmap = data?.roadmap;
-  const monthlyTasks = useMemo(() => roadmap?.monthlyTasks || [], [roadmap]);
+  const monthlyTasks = useMemo(() => {
+    const all = roadmap?.monthlyTasks || [];
+    return all.filter((t: any) => !taskPrefs.dismissed.includes(t.id));
+  }, [roadmap, taskPrefs]);
   const semesters = useMemo(() => roadmap?.semesters || [], [roadmap]);
   const cvAnalysis = data?.roadmap?.cvAnalysis || data?.cvUpload?.analysis || null;
   const completedCount = useMemo(() => monthlyTasks.filter((task) => completed.includes(task.id)).length, [completed, monthlyTasks]);
 
   const toggleTask = (taskId: string) => {
+    // If it's a coursework task, mark it done in coursework localStorage too
+    if (taskId.startsWith("cw_")) {
+      const localCw = localStorage.getItem("bluprint_coursework_v1");
+      if (localCw) {
+        const courses = JSON.parse(localCw);
+        const task = monthlyTasks.find((t: any) => t.id === taskId) as any;
+        if (task?._cwItemId) {
+          courses.forEach((c: any) => {
+            c.items?.forEach((item: any) => {
+              if (item.id === task._cwItemId) item.done = !item.done;
+            });
+          });
+          localStorage.setItem("bluprint_coursework_v1", JSON.stringify(courses));
+        }
+      }
+    }
     const next = completed.includes(taskId) ? completed.filter((id) => id !== taskId) : [...completed, taskId];
     setCompleted(next);
     localStorage.setItem("bluprint_completed_tasks", JSON.stringify(next));
+  };
+
+  const dismissTask = (taskId: string) => {
+    const next = { ...taskPrefs, dismissed: [...taskPrefs.dismissed, taskId] };
+    setTaskPrefs(next);
+    localStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
+  };
+
+  const toggleInterest = (taskId: string) => {
+    const isInterested = taskPrefs.interested.includes(taskId);
+    const next = {
+      ...taskPrefs,
+      interested: isInterested ? taskPrefs.interested.filter(id => id !== taskId) : [...taskPrefs.interested, taskId],
+    };
+    setTaskPrefs(next);
+    localStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
   };
 
   const sendChat = async () => {
@@ -395,12 +478,38 @@ export default function DashboardPage() {
                       </p>
                     </div>
 
-                    {/* Effort + help */}
-                    <div className="hidden sm:flex items-center gap-3 shrink-0 pt-0.5">
-                      <span className="text-[11px] font-medium text-[var(--muted)]">{task.effort}</span>
+                    {/* Actions */}
+                    <div className="hidden sm:flex items-center gap-1.5 shrink-0 pt-0.5">
+                      <span className="text-[11px] font-medium text-[var(--muted)] mr-1">{task.effort}</span>
+                      {task.id.startsWith("cw_") ? (
+                        <span className="text-[10px] font-medium text-amber-600 bg-amber-50 rounded-md px-1.5 py-0.5">
+                          <BookOpen size={10} className="inline mr-0.5" />{task.why}
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => toggleInterest(task.id)}
+                            className={`rounded-md p-1 transition-all ${
+                              taskPrefs.interested.includes(task.id)
+                                ? "text-[var(--accent)] bg-[var(--accent-light)]"
+                                : "opacity-0 group-hover:opacity-100 text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)]"
+                            }`}
+                            title="Interested"
+                          >
+                            <ThumbsUp size={12} />
+                          </button>
+                          <button
+                            onClick={() => dismissTask(task.id)}
+                            className="opacity-0 group-hover:opacity-100 rounded-md p-1 text-[var(--muted)] hover:text-red-500 hover:bg-red-50 transition-all"
+                            title="Not relevant"
+                          >
+                            <XIcon size={12} />
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => { setChatMessage(`Help me with: ${task.title}`); router.push("/dashboard?tab=assistant"); }}
-                        className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-[var(--accent)] hover:underline transition-opacity duration-100"
+                        className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-[var(--accent)] hover:underline transition-opacity duration-100 ml-1"
                       >
                         Get help
                       </button>
@@ -524,6 +633,7 @@ function categoryColor(cat: string) {
     ACADEMICS: "bg-emerald-50 text-emerald-600 border-emerald-100",
     VISA: "bg-amber-50 text-amber-600 border-amber-100",
     SKILLS: "bg-slate-50 text-slate-600 border-slate-100",
+    COURSEWORK: "bg-pink-50 text-pink-600 border-pink-100",
   };
   return colors[cat] || "bg-gray-50 text-gray-500 border-gray-100";
 }
