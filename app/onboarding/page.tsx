@@ -135,6 +135,7 @@ export default function OnboardingPage() {
       setProfile(mergedProfile);
       localStorage.setItem("bluprint_profile_review", JSON.stringify(mergedProfile));
       localStorage.setItem("bluprint_cv_raw_text", parsed.text);
+      localStorage.setItem("bluprint_cv_filename", selectedFile.name);
       setStep(3);
       setLoadingIndex(0);
     } catch (err) {
