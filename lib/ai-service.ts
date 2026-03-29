@@ -92,6 +92,11 @@ export const jobAnalysisSchema = z.object({
 
 export const assistantReplySchema = z.object({
   reply: z.string(),
+  actions: z.array(z.object({
+    type: z.enum(["create_event", "create_course", "add_coursework_item", "complete_task"]),
+    data: z.record(z.string(), z.unknown()),
+    confirm: z.string(), // short text to show user before executing
+  })).default([]),
 });
 
 type ExtractedProfile = z.infer<typeof extractedProfileSchema>;
@@ -266,14 +271,14 @@ Be realistic about the match score.
     );
   }
 
-  async chat(message: string, context: any): Promise<string> {
+  async chat(message: string, context: any): Promise<{ reply: string; actions: any[] }> {
     try {
       const pageCtx = context.pageContext;
       let pageHint = "";
       if (pageCtx) {
         pageHint = `\n\nPAGE CONTEXT (user is currently viewing: ${pageCtx.page}):\n${JSON.stringify(pageCtx.data || {})}`;
         if (pageCtx.page === "planner") {
-          pageHint += "\nThe user is on their weekly calendar/planner. Help with scheduling, study planning, and time management.";
+          pageHint += "\nThe user is on their weekly calendar/planner. They can see their schedule and coursework. Help with scheduling, study planning, and time management. You can CREATE events and courses for them.";
         } else if (pageCtx.page === "cv-analyzer") {
           pageHint += "\nThe user is on their CV/resume page. Help with resume improvements, bullet writing, and career positioning.";
         } else if (pageCtx.page === "roadmap") {
@@ -285,12 +290,35 @@ Be realistic about the match score.
 
       const response = await this.generateStructured(
         `
-You are bluprint's AI assistant for students.
+You are bluprint's AI assistant for students. You can TAKE ACTIONS on behalf of the student.
 Be direct, plain-English, useful, and specific. Keep answers concise but actionable.
 Use the student context below to personalize your response.
 If the user has coursework data, reference their actual classes, grades, and deadlines.
 If the user has schedule data, reference their actual calendar events.
-If visa topics come up, give general info only and say it is not legal advice.
+
+AVAILABLE ACTIONS (include in "actions" array when the user asks to create/add/schedule something):
+
+1. "create_event" — Add an event to the planner calendar
+   data: { title: string, date: "YYYY-MM-DD", start: number (decimal hour, e.g. 14.5 for 2:30 PM), end: number, type: "Class"|"Activity"|"Study"|"Work", location?: string, notes?: string }
+   Example: User says "I have a microeconomics exam Friday at 2pm" → create_event with type "Class"
+
+2. "create_course" — Add a new course to the coursework section
+   data: { name: string, color?: string }
+   Example: User says "I'm taking Calculus 2" → create_course
+
+3. "add_coursework_item" — Add homework, exam, quiz, etc. to a course
+   data: { courseName: string, title: string, type: "Homework"|"Exam"|"Quiz"|"Project"|"Reading", dueDate?: "YYYY-MM-DD", weight?: number }
+   Example: User says "I have a midterm in Physics on April 5" → add_coursework_item
+
+4. "complete_task" — Mark a monthly task as done
+   data: { taskId: string }
+
+RULES FOR ACTIONS:
+- If the user mentions a class/course that doesn't exist in their coursework, include BOTH a "create_course" action AND whatever other action they need (like add_coursework_item or create_event).
+- Always ask for missing critical info (date, time) BEFORE including an action. Don't guess dates.
+- If the user gives you enough info, include the action immediately — don't ask unnecessary questions.
+- Each action needs a "confirm" field with a short human-readable description like "Add Microeconomics exam on Friday at 2 PM"
+- Today's date is ${new Date().toISOString().slice(0, 10)}. Use this to calculate relative dates like "this Friday", "next Monday", etc.
 
 STUDENT PROFILE & ROADMAP:
 ${JSON.stringify({ profile: context.profile, roadmap: context.roadmap })}
@@ -302,14 +330,15 @@ ${JSON.stringify(context.history || [])}
 USER MESSAGE:
 ${message}
 
-Return a JSON object with a single field: { "reply": "your response here" }
+Return JSON: { "reply": "your response", "actions": [...] }
+If no actions needed, return empty actions array.
       `,
         assistantReplySchema
       );
-      return response.reply;
+      return { reply: response.reply, actions: response.actions || [] };
     } catch (e) {
       console.error("Chat error:", e);
-      return "I'm having trouble connecting right now. Try again in a moment.";
+      return { reply: "I'm having trouble connecting right now. Try again in a moment.", actions: [] };
     }
   }
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, FileText, Target, CheckCircle2, AlertCircle, XCircle, ChevronDown, RefreshCcw, ArrowRight, Sparkles, Upload, Eye, MessageSquare, TrendingUp, Star, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/AppShell";
+import { userStorage, setCurrentUserId } from "@/lib/user-storage";
 
 export default function CVAnalyzerPage() {
   const router = useRouter();
@@ -23,10 +24,12 @@ export default function CVAnalyzerPage() {
       const response = await fetch("/api/bootstrap");
       const result = await response.json();
 
-      // Fallback to localStorage
+      setCurrentUserId(result.user?.id || "");
+
+      // Fallback to userStorage
       if (!result.roadmap && !result.profile) {
-        const localProfile = localStorage.getItem("bluprint_profile_review");
-        const localFullRoadmap = localStorage.getItem("bluprint_full_roadmap");
+        const localProfile = userStorage.getItem("bluprint_profile_review");
+        const localFullRoadmap = userStorage.getItem("bluprint_full_roadmap");
 
         if (localProfile) {
           result.profile = JSON.parse(localProfile);
@@ -48,11 +51,11 @@ export default function CVAnalyzerPage() {
       }
 
       // Check localStorage for saved CV analysis
-      const localAnalysis = localStorage.getItem("bluprint_cv_analysis");
+      const localAnalysis = userStorage.getItem("bluprint_cv_analysis");
       if (localAnalysis && !result.cvUpload?.analysis) {
         const analysis = JSON.parse(localAnalysis);
         if (!result.cvUpload) {
-          result.cvUpload = { fileName: localStorage.getItem("bluprint_cv_filename") || "Your CV" };
+          result.cvUpload = { fileName: userStorage.getItem("bluprint_cv_filename") || "Your CV" };
         }
         result.cvUpload.analysis = analysis;
         if (result.roadmap) {
@@ -61,9 +64,9 @@ export default function CVAnalyzerPage() {
       }
 
       // Check if we have CV raw text saved
-      const hasCV = localStorage.getItem("bluprint_cv_raw_text");
+      const hasCV = userStorage.getItem("bluprint_cv_raw_text");
       if (hasCV && !result.cvUpload) {
-        result.cvUpload = { fileName: localStorage.getItem("bluprint_cv_filename") || "Your CV" };
+        result.cvUpload = { fileName: userStorage.getItem("bluprint_cv_filename") || "Your CV" };
       }
 
       setData(result);
@@ -77,8 +80,8 @@ export default function CVAnalyzerPage() {
     setAnalyzing(true);
 
     // Get resume text from localStorage
-    const resumeText = localStorage.getItem("bluprint_cv_raw_text") || "";
-    const profile = localStorage.getItem("bluprint_profile_review");
+    const resumeText = userStorage.getItem("bluprint_cv_raw_text") || "";
+    const profile = userStorage.getItem("bluprint_profile_review");
 
     const response = await fetch("/api/resume-copilot", {
       method: "POST",
@@ -106,7 +109,7 @@ export default function CVAnalyzerPage() {
     };
 
     // Save to localStorage
-    localStorage.setItem("bluprint_cv_analysis", JSON.stringify(analysis));
+    userStorage.setItem("bluprint_cv_analysis", JSON.stringify(analysis));
 
     setData((current: any) => ({
       ...current,
@@ -125,8 +128,8 @@ export default function CVAnalyzerPage() {
     if (!jobDescription.trim()) return;
     setJobAnalyzing(true);
     setError("");
-    const resumeText = localStorage.getItem("bluprint_cv_raw_text") || "";
-    const profile = localStorage.getItem("bluprint_profile_review");
+    const resumeText = userStorage.getItem("bluprint_cv_raw_text") || "";
+    const profile = userStorage.getItem("bluprint_profile_review");
     const response = await fetch("/api/job-analyzer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -155,7 +158,7 @@ export default function CVAnalyzerPage() {
 
   const cvAnalysis = data?.cvUpload?.analysis || data?.roadmap?.cvAnalysis;
   const score = cvAnalysis?.score || 0;
-  const hasCV = !!localStorage.getItem("bluprint_cv_raw_text") || !!data?.cvUpload;
+  const hasCV = !!userStorage.getItem("bluprint_cv_raw_text") || !!data?.cvUpload;
   const profile = data?.profile;
 
   const scoreColor = score >= 75 ? "text-emerald-500" : score >= 50 ? "text-amber-500" : "text-red-500";

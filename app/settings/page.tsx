@@ -7,6 +7,7 @@ import {
   Upload, User as UserIcon, BookOpen, Calendar, X,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import { userStorage } from "@/lib/user-storage";
 
 type ProfileData = {
   name: string;
@@ -69,7 +70,7 @@ export default function SettingsPage() {
     load();
 
     // Load uploaded files from localStorage
-    const stored = localStorage.getItem("bluprint_uploaded_files");
+    const stored = userStorage.getItem("bluprint_uploaded_files");
     if (stored) setFiles(JSON.parse(stored));
   }, []);
 
@@ -91,13 +92,13 @@ export default function SettingsPage() {
   const addFile = (file: UploadedFile) => {
     const next = [...files, file];
     setFiles(next);
-    localStorage.setItem("bluprint_uploaded_files", JSON.stringify(next));
+    userStorage.setItem("bluprint_uploaded_files", JSON.stringify(next));
   };
 
   const removeFile = (id: string) => {
     const next = files.filter(f => f.id !== id);
     setFiles(next);
-    localStorage.setItem("bluprint_uploaded_files", JSON.stringify(next));
+    userStorage.setItem("bluprint_uploaded_files", JSON.stringify(next));
   };
 
   if (loading) {

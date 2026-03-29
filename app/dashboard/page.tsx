@@ -6,6 +6,7 @@ import { ArrowRight, Check, ChevronDown, Loader2, RefreshCcw, Sparkles, Send, Bo
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import type { MonthlyTask } from "@/components/PlannerBoard";
+import { userStorage, setCurrentUserId } from "@/lib/user-storage";
 
 type Semester = {
   semester: string;
@@ -22,7 +23,7 @@ type BootstrapData = {
     cvAnalysis: any;
   } | null;
   chatThreads: Array<{ id: string; title: string; messages: Array<{ role: string; content: string }> }>;
-  user: { name: string | null; email: string | null };
+  user: { id?: string; name: string | null; email: string | null };
 };
 
 export default function DashboardPage() {
@@ -45,11 +46,13 @@ export default function DashboardPage() {
         return;
       }
 
-      // Fallback to localStorage if API returns no data (Vercel has no DB)
+      setCurrentUserId(result.user?.id || "");
+
+      // Fallback to userStorage if API returns no data (Vercel has no DB)
       if (!result.roadmap && !result.profile) {
-        const localProfile = localStorage.getItem("bluprint_profile_review");
-        const localRoadmap = localStorage.getItem("bluprint_ai_roadmap");
-        const localFullRoadmap = localStorage.getItem("bluprint_full_roadmap");
+        const localProfile = userStorage.getItem("bluprint_profile_review");
+        const localRoadmap = userStorage.getItem("bluprint_ai_roadmap");
+        const localFullRoadmap = userStorage.getItem("bluprint_full_roadmap");
 
         if (localProfile) {
           result.profile = JSON.parse(localProfile);
@@ -77,7 +80,7 @@ export default function DashboardPage() {
       }
 
       // Override with latest CV analysis from localStorage (if user ran analysis)
-      const localCvAnalysis = localStorage.getItem("bluprint_cv_analysis");
+      const localCvAnalysis = userStorage.getItem("bluprint_cv_analysis");
       if (localCvAnalysis) {
         const analysis = JSON.parse(localCvAnalysis);
         if (result.roadmap) {
@@ -88,7 +91,7 @@ export default function DashboardPage() {
       }
 
       // Load coursework items due soon as dashboard tasks
-      const localCoursework = localStorage.getItem("bluprint_coursework_v1");
+      const localCoursework = userStorage.getItem("bluprint_coursework_v1");
       if (localCoursework) {
         const courses = JSON.parse(localCoursework);
         const now = new Date();
@@ -118,14 +121,14 @@ export default function DashboardPage() {
       }
 
       // Load task preferences
-      const localPrefs = localStorage.getItem("bluprint_task_preferences");
+      const localPrefs = userStorage.getItem("bluprint_task_preferences");
       if (localPrefs) {
         setTaskPrefs(JSON.parse(localPrefs));
       }
 
       setData(result);
       if (result.chatThreads?.[0]?.id) setThreadId(result.chatThreads[0].id);
-      const saved = localStorage.getItem("bluprint_completed_tasks") || localStorage.getItem("foundry_completed_tasks");
+      const saved = userStorage.getItem("bluprint_completed_tasks") || userStorage.getItem("foundry_completed_tasks");
       if (saved) setCompleted(JSON.parse(saved));
       setLoading(false);
     };
@@ -145,7 +148,7 @@ export default function DashboardPage() {
   const toggleTask = (taskId: string) => {
     // If it's a coursework task, mark it done in coursework localStorage too
     if (taskId.startsWith("cw_")) {
-      const localCw = localStorage.getItem("bluprint_coursework_v1");
+      const localCw = userStorage.getItem("bluprint_coursework_v1");
       if (localCw) {
         const courses = JSON.parse(localCw);
         const task = monthlyTasks.find((t: any) => t.id === taskId) as any;
@@ -155,19 +158,19 @@ export default function DashboardPage() {
               if (item.id === task._cwItemId) item.done = !item.done;
             });
           });
-          localStorage.setItem("bluprint_coursework_v1", JSON.stringify(courses));
+          userStorage.setItem("bluprint_coursework_v1", JSON.stringify(courses));
         }
       }
     }
     const next = completed.includes(taskId) ? completed.filter((id) => id !== taskId) : [...completed, taskId];
     setCompleted(next);
-    localStorage.setItem("bluprint_completed_tasks", JSON.stringify(next));
+    userStorage.setItem("bluprint_completed_tasks", JSON.stringify(next));
   };
 
   const dismissTask = (taskId: string) => {
     const next = { ...taskPrefs, dismissed: [...taskPrefs.dismissed, taskId] };
     setTaskPrefs(next);
-    localStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
+    userStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
   };
 
   const toggleInterest = (taskId: string) => {
@@ -177,7 +180,7 @@ export default function DashboardPage() {
       interested: isInterested ? taskPrefs.interested.filter(id => id !== taskId) : [...taskPrefs.interested, taskId],
     };
     setTaskPrefs(next);
-    localStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
+    userStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
   };
 
   const sendChat = async () => {

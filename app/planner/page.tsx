@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { PlannerBoard, type MonthlyTask, type PlannerEntry, migrateEntries } from "@/components/PlannerBoard";
+import { userStorage } from "@/lib/user-storage";
 
 type BootstrapData = {
   profile: {
@@ -50,10 +51,10 @@ export default function PlannerPage() {
       const result = await response.json();
       if (!response.ok) { setLoading(false); return; }
       setData(result);
-      const savedV2 = localStorage.getItem(plannerStorageKey);
-      const legacySavedV2 = localStorage.getItem("foundry_planner_entries_v2");
-      const savedV1 = localStorage.getItem("bluprint_planner_entries");
-      const legacySavedV1 = localStorage.getItem("foundry_planner_entries");
+      const savedV2 = userStorage.getItem(plannerStorageKey);
+      const legacySavedV2 = userStorage.getItem("foundry_planner_entries_v2");
+      const savedV1 = userStorage.getItem("bluprint_planner_entries");
+      const legacySavedV1 = userStorage.getItem("foundry_planner_entries");
       if (savedV2) {
         setEntries(migrateEntries(JSON.parse(savedV2)));
       } else if (legacySavedV2) {
@@ -71,8 +72,18 @@ export default function PlannerPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading) localStorage.setItem(plannerStorageKey, JSON.stringify(entries));
+    if (!loading) userStorage.setItem(plannerStorageKey, JSON.stringify(entries));
   }, [entries, loading]);
+
+  // Listen for AI sidebar data changes
+  useEffect(() => {
+    const handler = () => {
+      const raw = userStorage.getItem(plannerStorageKey);
+      if (raw) setEntries(migrateEntries(JSON.parse(raw)));
+    };
+    window.addEventListener("bluprint-data-changed", handler);
+    return () => window.removeEventListener("bluprint-data-changed", handler);
+  }, []);
 
   if (loading || !data) {
     return (

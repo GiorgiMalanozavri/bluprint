@@ -9,6 +9,7 @@ import {
 import { createPortal } from "react-dom";
 import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { CalendarIntegrationPanel } from "./CalendarIntegrationPanel";
+import { userStorage } from "@/lib/user-storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type MonthlyTask = { id: string; title: string; category: string; effort: string; why: string };
@@ -781,7 +782,7 @@ function CourseworkSection({ entries, setEntries }: { entries: PlannerEntry[]; s
   const [editingScore, setEditingScore] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(COURSEWORK_KEY);
+    const saved = userStorage.getItem(COURSEWORK_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       // Migrate old items without weight/score
@@ -797,8 +798,8 @@ function CourseworkSection({ entries, setEntries }: { entries: PlannerEntry[]; s
   }, []);
 
   useEffect(() => {
-    if (courses.length > 0 || localStorage.getItem(COURSEWORK_KEY)) {
-      localStorage.setItem(COURSEWORK_KEY, JSON.stringify(courses));
+    if (courses.length > 0 || userStorage.getItem(COURSEWORK_KEY)) {
+      userStorage.setItem(COURSEWORK_KEY, JSON.stringify(courses));
     }
   }, [courses]);
 

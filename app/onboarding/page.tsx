@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, ChevronLeft, Loader2, Pencil, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { userStorage, setCurrentUserId } from "@/lib/user-storage";
 
 type Step = 1 | 2 | 3 | 4;
 type Experience = { title: string; company: string; duration: string; bullets: string[] };
@@ -78,6 +79,9 @@ export default function OnboardingPage() {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
         const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          setCurrentUserId(user.id);
+        }
         if (user?.user_metadata?.full_name) {
           setProfile(p => ({ ...p, name: user.user_metadata.full_name }));
         }
@@ -133,9 +137,9 @@ export default function OnboardingPage() {
 
       const mergedProfile = { ...emptyProfile, ...extracted.profile };
       setProfile(mergedProfile);
-      localStorage.setItem("bluprint_profile_review", JSON.stringify(mergedProfile));
-      localStorage.setItem("bluprint_cv_raw_text", parsed.text);
-      localStorage.setItem("bluprint_cv_filename", selectedFile.name);
+      userStorage.setItem("bluprint_profile_review", JSON.stringify(mergedProfile));
+      userStorage.setItem("bluprint_cv_raw_text", parsed.text);
+      userStorage.setItem("bluprint_cv_filename", selectedFile.name);
       setStep(3);
       setLoadingIndex(0);
     } catch (err) {
@@ -160,10 +164,10 @@ export default function OnboardingPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to generate roadmap");
 
-      localStorage.setItem("bluprint_onboarding_complete", "true");
-      localStorage.setItem("bluprint_profile_review", JSON.stringify(profile));
-      localStorage.setItem("bluprint_ai_roadmap", JSON.stringify(result.semesters || []));
-      localStorage.setItem("bluprint_full_roadmap", JSON.stringify(result));
+      userStorage.setItem("bluprint_onboarding_complete", "true");
+      userStorage.setItem("bluprint_profile_review", JSON.stringify(profile));
+      userStorage.setItem("bluprint_ai_roadmap", JSON.stringify(result.semesters || []));
+      userStorage.setItem("bluprint_full_roadmap", JSON.stringify(result));
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to build roadmap.");

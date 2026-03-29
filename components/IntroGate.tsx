@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Search, Globe, ArrowRight, Sparkles, Calendar, FileText, Target } from "lucide-react";
 import { COUNTRIES, type Country } from "@/lib/countries";
+import { userStorage } from "@/lib/user-storage";
 
 export default function IntroGate({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
@@ -16,12 +17,12 @@ export default function IntroGate({ onComplete }: { onComplete: () => void }) {
 
   const handleCountrySelect = (country: Country) => {
     setSelectedCountry(country);
-    localStorage.setItem("bluprint_user_country", country.name);
+    userStorage.setItem("bluprint_user_country", country.name);
     setStep(1);
   };
 
   const handleGetStarted = () => {
-    localStorage.setItem("bluprint_intro_seen", "true");
+    userStorage.setItem("bluprint_intro_seen", "true");
     onComplete();
     window.location.href = "/sign-in";
   };
