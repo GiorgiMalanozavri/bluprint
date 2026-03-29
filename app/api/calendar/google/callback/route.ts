@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID!;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const REDIRECT_URI         = process.env.NEXTAUTH_URL + "/api/calendar/google/callback";
+const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+const REDIRECT_URI         = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000") + "/api/calendar/google/callback";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
