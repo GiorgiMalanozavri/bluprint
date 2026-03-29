@@ -11,35 +11,55 @@ interface Props {
 
 export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
   const [gcalStatus, setGcalStatus] = useState<"idle" | "loading" | "connected" | "error">("idle");
+  const [syncCount, setSyncCount] = useState(0);
+
+  const fetchGoogleEvents = useCallback(async () => {
+    setGcalStatus("loading");
+    try {
+      const r = await fetch("/api/calendar/google/events");
+      const data = await r.json();
+      if (data.connected) {
+        setGcalStatus("connected");
+        const existingIds = new Set(entries.map((e) => e.id));
+        const newEvents = (data.events as PlannerEntry[]).filter((e) => !existingIds.has(e.id));
+        if (newEvents.length) {
+          setEntries([...entries, ...newEvents]);
+          setSyncCount(newEvents.length);
+        } else {
+          setSyncCount(0);
+        }
+      } else {
+        setGcalStatus("idle");
+      }
+    } catch {
+      setGcalStatus("error");
+    }
+  }, [entries, setEntries]);
 
   useEffect(() => {
-    setGcalStatus("loading");
-    fetch("/api/calendar/google/events")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.connected) {
-          setGcalStatus("connected");
-          const existingIds = new Set(entries.map((e) => e.id));
-          const newEvents = (data.events as PlannerEntry[]).filter((e) => !existingIds.has(e.id));
-          if (newEvents.length) setEntries([...entries, ...newEvents]);
-        } else {
-          setGcalStatus("idle");
-        }
-      })
-      .catch(() => setGcalStatus("idle"));
+    fetchGoogleEvents();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const syncToGoogle = useCallback(async () => {
+    let synced = 0;
     for (const entry of entries) {
-      if ((entry as any).gcalId) continue;
-      await fetch("/api/calendar/google/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry),
-      });
+      if ((entry as any).gcalId || entry.id.startsWith("gcal_")) continue;
+      try {
+        await fetch("/api/calendar/google/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+        });
+        synced++;
+      } catch { /* skip failed */ }
     }
-    alert("Synced to Google Calendar");
+    setSyncCount(synced);
+    if (synced > 0) {
+      alert(`Synced ${synced} event(s) to Google Calendar`);
+    } else {
+      alert("All events already synced");
+    }
   }, [entries]);
 
   const handleICSImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,8 +89,8 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
   };
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm space-y-4">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">Connect Calendar</p>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-lg space-y-4">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">Sync Calendar</p>
 
       {/* Google Calendar */}
       <div className="space-y-2">
@@ -85,20 +105,28 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium">Google Calendar</p>
-            <p className={`text-[10px] ${gcalStatus === "connected" ? "text-emerald-600" : "text-[var(--muted)]"}`}>
-              {gcalStatus === "loading" ? "Checking..." : gcalStatus === "connected" ? "Connected" : "Not connected"}
+            <p className={`text-[10px] ${gcalStatus === "connected" ? "text-emerald-600" : gcalStatus === "error" ? "text-red-500" : "text-[var(--muted)]"}`}>
+              {gcalStatus === "loading" ? "Syncing..." : gcalStatus === "connected" ? "Connected" : gcalStatus === "error" ? "Connection failed" : "Not connected"}
             </p>
           </div>
-          {gcalStatus !== "connected" ? (
+          {gcalStatus === "idle" || gcalStatus === "error" ? (
             <a href="/api/calendar/google" className="rounded-xl bg-[var(--accent)] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--accent-hover)] transition-colors shrink-0">
               Connect
             </a>
-          ) : (
-            <button onClick={syncToGoogle} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-600 transition-colors shrink-0">
-              Sync
-            </button>
-          )}
+          ) : gcalStatus === "connected" ? (
+            <div className="flex gap-1.5">
+              <button onClick={fetchGoogleEvents} className="rounded-xl bg-[var(--accent)] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--accent-hover)] transition-colors shrink-0">
+                Pull
+              </button>
+              <button onClick={syncToGoogle} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-600 transition-colors shrink-0">
+                Push
+              </button>
+            </div>
+          ) : null}
         </div>
+        {gcalStatus === "connected" && syncCount > 0 && (
+          <p className="text-[10px] text-emerald-600 pl-9">{syncCount} event(s) synced</p>
+        )}
       </div>
 
       <div className="h-px bg-[var(--border)]" />
@@ -107,7 +135,7 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
       <div className="space-y-2">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shadow-sm shrink-0">
-            <span className="text-sm">A</span>
+            <span className="text-sm">📅</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium">Apple / iCal</p>
@@ -123,9 +151,6 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
             Export .ics
           </button>
         </div>
-        <p className="text-[10px] text-[var(--muted)] leading-relaxed">
-          Export to open in macOS Calendar. Import any .ics from Google, Apple, or any iCal source.
-        </p>
       </div>
     </div>
   );
