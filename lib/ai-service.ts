@@ -93,9 +93,9 @@ export const jobAnalysisSchema = z.object({
 export const assistantReplySchema = z.object({
   reply: z.string(),
   actions: z.array(z.object({
-    type: z.enum(["create_event", "create_course", "add_coursework_item", "complete_task"]),
-    data: z.record(z.string(), z.unknown()),
-    confirm: z.string(), // short text to show user before executing
+    type: z.string(),
+    data: z.any().default({}),
+    confirm: z.string().default(""),
   })).default([]),
 });
 
@@ -288,8 +288,8 @@ Be realistic about the match score.
         }
       }
 
-      const response = await this.generateStructured(
-        `
+      // Call the model directly and parse manually for better error handling
+      const rawText = await this.callModel(`
 You are bluprint's AI assistant for students. You can TAKE ACTIONS on behalf of the student.
 Be direct, plain-English, useful, and specific. Keep answers concise but actionable.
 Use the student context below to personalize your response.
@@ -332,10 +332,21 @@ ${message}
 
 Return JSON: { "reply": "your response", "actions": [...] }
 If no actions needed, return empty actions array.
-      `,
-        assistantReplySchema
-      );
-      return { reply: response.reply, actions: response.actions || [] };
+      `, true);
+
+      // Parse with fallback — don't let Zod validation kill the response
+      const clean = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      let parsed: any;
+      try {
+        parsed = JSON.parse(clean);
+      } catch {
+        // If JSON parse fails, treat the whole response as a reply
+        return { reply: clean || rawText, actions: [] };
+      }
+
+      const reply = parsed.reply || parsed.message || (typeof parsed === "string" ? parsed : JSON.stringify(parsed));
+      const actions = Array.isArray(parsed.actions) ? parsed.actions : [];
+      return { reply, actions };
     } catch (e) {
       console.error("Chat error:", e);
       return { reply: "I'm having trouble connecting right now. Try again in a moment.", actions: [] };
