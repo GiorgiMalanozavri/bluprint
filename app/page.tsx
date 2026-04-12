@@ -212,7 +212,7 @@ export default function HomePage() {
               </div>
               <div>
                 <h3 className="text-[15px] font-semibold">Smart CV analysis</h3>
-                <p className="text-[11px] text-[var(--muted)]">Get a recruiter's perspective on your resume</p>
+                <p className="text-[11px] text-[var(--muted)]">Get a recruiter&apos;s perspective on your resume</p>
               </div>
             </div>
             <div className="rounded-xl bg-[var(--background)] border border-[var(--border)] p-4">
