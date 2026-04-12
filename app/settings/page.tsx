@@ -4,21 +4,39 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Check, ChevronRight, FileText, GraduationCap, Loader2, Plus, Save, Trash2,
-  Upload, User as UserIcon, BookOpen, Calendar, X,
+  Upload, User as UserIcon, BookOpen, Calendar, X, Globe, Briefcase,
+  ClipboardPaste,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { userStorage } from "@/lib/user-storage";
+
+type ParsedCourse = { name: string; completed: boolean };
+type ParsedSemester = { label: string; courses: ParsedCourse[] };
 
 type ProfileData = {
   name: string;
   email?: string;
   university: string;
   degree: string;
+  minor: string;
+  gpa: string;
   yearOfStudy: string;
   graduating: string;
   studentType: string;
+  countryOfOrigin: string;
+  visaStatus: string;
+  sponsorshipNeeded: string;
   dreamRole: string;
   targetIndustries: string;
+  targetCompanies: string;
+  preferredLocations: string;
+  willingToRelocate: string;
+  linkedinUrl: string;
+  portfolioUrl: string;
+  certifications: string[];
+  languages: string[];
+  courseSchedule: ParsedSemester[];
+  courseScheduleRaw: string;
 };
 
 type UploadedFile = {
@@ -33,15 +51,53 @@ const emptyProfile: ProfileData = {
   name: "",
   university: "",
   degree: "",
+  minor: "",
+  gpa: "",
   yearOfStudy: "",
   graduating: "",
   studentType: "Domestic",
+  countryOfOrigin: "",
+  visaStatus: "",
+  sponsorshipNeeded: "",
   dreamRole: "",
   targetIndustries: "",
+  targetCompanies: "",
+  preferredLocations: "",
+  willingToRelocate: "",
+  linkedinUrl: "",
+  portfolioUrl: "",
+  certifications: [],
+  languages: [],
+  courseSchedule: [],
+  courseScheduleRaw: "",
 };
 
+function parseCourseSchedule(raw: string): ParsedSemester[] {
+  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  const semesters: ParsedSemester[] = [];
+  let current: ParsedSemester | null = null;
+  const semesterPattern = /^(semester|year|fall|spring|summer|winter|freshman|sophomore|junior|senior|1st|2nd|3rd|4th|first|second|third|fourth)/i;
+  const creditPattern = /^\d+\s*(credits?|hrs?|hours?|cr\.?)\s*$/i;
+
+  for (const line of lines) {
+    if (semesterPattern.test(line) || /^(year\s*\d|sem\s*\d)/i.test(line)) {
+      current = { label: line, courses: [] };
+      semesters.push(current);
+    } else if (current) {
+      if (creditPattern.test(line) || line.length < 3 || /^\d+$/.test(line) || /^total/i.test(line)) continue;
+      current.courses.push({ name: line, completed: false });
+    } else {
+      if (!current) { current = { label: "Courses", courses: [] }; semesters.push(current); }
+      if (!creditPattern.test(line) && line.length >= 3 && !/^\d+$/.test(line) && !/^total/i.test(line)) {
+        current.courses.push({ name: line, completed: false });
+      }
+    }
+  }
+  return semesters.filter(s => s.courses.length > 0);
+}
+
 export default function SettingsPage() {
-  const [tab, setTab] = useState<"profile" | "documents">("profile");
+  const [tab, setTab] = useState<"profile" | "career" | "courses" | "documents">("profile");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,16 +107,24 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "documents") setTab("documents");
+    if (t === "documents" || t === "career" || t === "courses") setTab(t);
   }, [searchParams]);
 
-  // Load profile
   useEffect(() => {
     const load = async () => {
       try {
         const res = await fetch("/api/profile");
         const data = await res.json();
-        setProfile(data.profile || emptyProfile);
+        const p = data.profile || emptyProfile;
+        // Ensure arrays exist
+        setProfile({
+          ...emptyProfile,
+          ...p,
+          certifications: p.certifications || [],
+          languages: p.languages || [],
+          courseSchedule: p.courseSchedule || [],
+          courseScheduleRaw: p.courseScheduleRaw || "",
+        });
       } catch {
         setProfile(emptyProfile);
       } finally {
@@ -69,7 +133,6 @@ export default function SettingsPage() {
     };
     load();
 
-    // Load uploaded files from localStorage
     const stored = userStorage.getItem("bluprint_uploaded_files");
     if (stored) setFiles(JSON.parse(stored));
   }, []);
@@ -120,33 +183,41 @@ export default function SettingsPage() {
 
         {/* Tabs */}
         <div className="segment-switcher mb-8">
-          <button onClick={() => setTab("profile")}
-            className={`segment-tab ${tab === "profile" ? "segment-tab-active" : ""}`}>
-            <UserIcon size={13} className="mr-1.5 inline" />Profile
-          </button>
-          <button onClick={() => setTab("documents")}
-            className={`segment-tab ${tab === "documents" ? "segment-tab-active" : ""}`}>
-            <FileText size={13} className="mr-1.5 inline" />Documents
-          </button>
+          {(["profile", "career", "courses", "documents"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`segment-tab ${tab === t ? "segment-tab-active" : ""}`}>
+              {t === "profile" && <UserIcon size={13} className="mr-1.5 inline" />}
+              {t === "career" && <Briefcase size={13} className="mr-1.5 inline" />}
+              {t === "courses" && <BookOpen size={13} className="mr-1.5 inline" />}
+              {t === "documents" && <FileText size={13} className="mr-1.5 inline" />}
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
         </div>
 
         {/* Profile Tab */}
         {tab === "profile" && profile && (
           <div className="space-y-6">
-            <Section title="Personal">
+            <Section title="Personal & Academic">
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Full name" value={profile.name}
+                <Field label="Full name" required value={profile.name}
                   onChange={v => setProfile({ ...profile, name: v })} />
-                <Field label="University" value={profile.university}
+                <Field label="University" required value={profile.university}
                   onChange={v => setProfile({ ...profile, university: v })} />
-                <Field label="Degree / Major" value={profile.degree}
+                <Field label="Degree / Major" required value={profile.degree}
                   onChange={v => setProfile({ ...profile, degree: v })} />
-                <Field label="Year of study" value={profile.yearOfStudy}
+                <Field label="Minor(s)" value={profile.minor}
+                  onChange={v => setProfile({ ...profile, minor: v })} />
+                <Field label="Year of study" required value={profile.yearOfStudy}
                   onChange={v => setProfile({ ...profile, yearOfStudy: v })} />
-                <Field label="Graduation" value={profile.graduating}
+                <Field label="Expected graduation" required value={profile.graduating}
                   onChange={v => setProfile({ ...profile, graduating: v })} />
+                <Field label="GPA" value={profile.gpa}
+                  onChange={v => setProfile({ ...profile, gpa: v })} />
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">Student type</label>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                    Student type <span className="text-red-400">*</span>
+                  </label>
                   <div className="flex gap-2">
                     {["Domestic", "International"].map(opt => (
                       <button key={opt} onClick={() => setProfile({ ...profile, studentType: opt })}
@@ -163,72 +234,144 @@ export default function SettingsPage() {
               </div>
             </Section>
 
-            <Section title="Career goal">
+            <Section title="Background" icon={<Globe size={15} />}>
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Dream role" value={profile.dreamRole}
+                <Field label="Country of origin"
+                  required={profile.studentType === "International"}
+                  value={profile.countryOfOrigin}
+                  onChange={v => setProfile({ ...profile, countryOfOrigin: v })}
+                  placeholder="e.g. India, South Korea..." />
+                {profile.studentType === "International" && (
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">Visa status</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {["F-1", "J-1", "H-1B", "OPT", "CPT", "Other"].map(opt => (
+                          <button key={opt} onClick={() => setProfile({ ...profile, visaStatus: opt })}
+                            className={`rounded-lg px-3 py-2 text-[11px] font-medium transition-all ${
+                              profile.visaStatus === opt
+                                ? "bg-[var(--foreground)] text-white"
+                                : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)]"
+                            }`}>
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">Need sponsorship?</label>
+                      <div className="flex gap-2">
+                        {["Yes", "No", "Not sure"].map(opt => (
+                          <button key={opt} onClick={() => setProfile({ ...profile, sponsorshipNeeded: opt })}
+                            className={`flex-1 rounded-lg py-2.5 text-xs font-medium transition-all ${
+                              profile.sponsorshipNeeded === opt
+                                ? "bg-[var(--foreground)] text-white"
+                                : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)]"
+                            }`}>
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="mt-5">
+                <TagField label="Languages" items={profile.languages}
+                  onChange={items => setProfile({ ...profile, languages: items })} />
+              </div>
+            </Section>
+
+            <Section title="Online presence">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="LinkedIn URL" value={profile.linkedinUrl}
+                  onChange={v => setProfile({ ...profile, linkedinUrl: v })}
+                  placeholder="linkedin.com/in/..." />
+                <Field label="Portfolio / Website" value={profile.portfolioUrl}
+                  onChange={v => setProfile({ ...profile, portfolioUrl: v })}
+                  placeholder="yoursite.com" />
+              </div>
+            </Section>
+
+            <SaveButton saving={saving} saved={saved} onSave={saveProfile} />
+          </div>
+        )}
+
+        {/* Career Tab */}
+        {tab === "career" && profile && (
+          <div className="space-y-6">
+            <Section title="Career goals">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Dream role" required value={profile.dreamRole}
                   onChange={v => setProfile({ ...profile, dreamRole: v })}
                   placeholder="e.g. Software Engineer, Analyst..." />
                 <Field label="Target industries" value={profile.targetIndustries}
                   onChange={v => setProfile({ ...profile, targetIndustries: v })}
                   placeholder="e.g. Tech, Finance, Consulting..." />
+                <Field label="Target companies" value={profile.targetCompanies}
+                  onChange={v => setProfile({ ...profile, targetCompanies: v })}
+                  placeholder="e.g. Google, Goldman Sachs..." />
+                <Field label="Preferred locations" value={profile.preferredLocations}
+                  onChange={v => setProfile({ ...profile, preferredLocations: v })}
+                  placeholder="e.g. New York, San Francisco..." />
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">Willing to relocate?</label>
+                  <div className="flex gap-2">
+                    {["Yes", "No", "Maybe"].map(opt => (
+                      <button key={opt} onClick={() => setProfile({ ...profile, willingToRelocate: opt })}
+                        className={`flex-1 rounded-lg py-2.5 text-xs font-medium transition-all ${
+                          profile.willingToRelocate === opt
+                            ? "bg-[var(--foreground)] text-white"
+                            : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)]"
+                        }`}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </Section>
 
-            <div className="flex items-center gap-3 pt-2">
-              <button onClick={saveProfile} disabled={saving}
-                className="btn-primary h-10 px-6 text-sm flex items-center gap-2">
-                {saving ? <Loader2 size={14} className="animate-spin" /> :
-                  saved ? <><Check size={14} /> Saved</> : <><Save size={14} /> Save changes</>}
-              </button>
-            </div>
+            <Section title="Skills & Certifications">
+              <TagField label="Certifications" items={profile.certifications}
+                onChange={items => setProfile({ ...profile, certifications: items })} />
+            </Section>
+
+            <SaveButton saving={saving} saved={saved} onSave={saveProfile} />
           </div>
+        )}
+
+        {/* Courses Tab */}
+        {tab === "courses" && profile && (
+          <CourseScheduleSettings profile={profile} setProfile={setProfile} onSave={saveProfile} saving={saving} saved={saved} />
         )}
 
         {/* Documents Tab */}
         {tab === "documents" && (
           <div className="space-y-6">
-            {/* CVs */}
             <Section title="Resumes / CVs" icon={<FileText size={15} />}>
               <div className="space-y-2">
                 {files.filter(f => f.type === "cv").map(f => (
                   <FileRow key={f.id} file={f} onRemove={() => removeFile(f.id)} />
                 ))}
               </div>
-              <UploadButton
-                label="Upload CV"
-                accept=".pdf,.doc,.docx"
+              <UploadButton label="Upload CV" accept=".pdf,.doc,.docx"
                 onUpload={(file) => {
-                  addFile({
-                    id: crypto.randomUUID(),
-                    name: file.name,
-                    type: "cv",
-                    uploadedAt: new Date().toISOString(),
-                  });
-                }}
-              />
+                  addFile({ id: crypto.randomUUID(), name: file.name, type: "cv", uploadedAt: new Date().toISOString() });
+                }} />
             </Section>
 
-            {/* Syllabuses */}
             <Section title="Class Syllabuses" icon={<BookOpen size={15} />}>
               <div className="space-y-2">
                 {files.filter(f => f.type === "syllabus").map(f => (
                   <FileRow key={f.id} file={f} onRemove={() => removeFile(f.id)} />
                 ))}
               </div>
-              <UploadButton
-                label="Upload Syllabus"
-                accept=".pdf,.doc,.docx"
+              <UploadButton label="Upload Syllabus" accept=".pdf,.doc,.docx"
                 onUpload={(file) => {
                   const className = prompt("Which class is this for? (e.g. Microeconomics)");
-                  addFile({
-                    id: crypto.randomUUID(),
-                    name: file.name,
-                    type: "syllabus",
-                    className: className || undefined,
-                    uploadedAt: new Date().toISOString(),
-                  });
-                }}
-              />
+                  addFile({ id: crypto.randomUUID(), name: file.name, type: "syllabus", className: className || undefined, uploadedAt: new Date().toISOString() });
+                }} />
             </Section>
           </div>
         )}
@@ -236,6 +379,111 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
+/* ─── Course Schedule Settings ──────────────────── */
+
+function CourseScheduleSettings({
+  profile,
+  setProfile,
+  onSave,
+  saving,
+  saved,
+}: {
+  profile: ProfileData;
+  setProfile: React.Dispatch<React.SetStateAction<ProfileData | null>>;
+  onSave: () => void;
+  saving: boolean;
+  saved: boolean;
+}) {
+  const [rawText, setRawText] = useState(profile.courseScheduleRaw || "");
+  const hasCourses = profile.courseSchedule.length > 0;
+
+  const handleParse = () => {
+    const result = parseCourseSchedule(rawText);
+    setProfile(p => p ? { ...p, courseScheduleRaw: rawText, courseSchedule: result } : p);
+  };
+
+  const toggleCourse = (semIdx: number, courseIdx: number) => {
+    setProfile(p => {
+      if (!p) return p;
+      const next = p.courseSchedule.map((sem, si) =>
+        si === semIdx
+          ? { ...sem, courses: sem.courses.map((c, ci) => ci === courseIdx ? { ...c, completed: !c.completed } : c) }
+          : sem
+      );
+      return { ...p, courseSchedule: next };
+    });
+  };
+
+  const totalCourses = profile.courseSchedule.reduce((s, sem) => s + sem.courses.length, 0);
+  const completedCourses = profile.courseSchedule.reduce((s, sem) => s + sem.courses.filter(c => c.completed).length, 0);
+
+  return (
+    <div className="space-y-6">
+      <Section title="Course schedule" icon={<BookOpen size={15} />}>
+        <p className="text-xs text-[var(--muted)] mb-4">
+          Paste your 4-year sample course schedule from your university website, then check off completed courses.
+        </p>
+        <textarea
+          value={rawText}
+          onChange={e => setRawText(e.target.value)}
+          placeholder={`Example:\n\nFall Semester 1\nIntro to Computer Science\nCalculus I\nEnglish Composition\n\nSpring Semester 1\nData Structures\nCalculus II`}
+          className="w-full h-48 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/10 transition-all resize-none font-mono"
+        />
+        <button onClick={handleParse} disabled={!rawText.trim()}
+          className="mt-3 btn-primary h-10 px-6 text-sm flex items-center gap-2">
+          <ClipboardPaste size={14} /> Parse schedule
+        </button>
+      </Section>
+
+      {hasCourses && (
+        <>
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">{completedCourses} of {totalCourses} courses completed</p>
+              <p className="text-xs text-[var(--muted)] mt-0.5">{profile.courseSchedule.length} semesters</p>
+            </div>
+            <div className="w-32 h-2 rounded-full bg-[var(--background-secondary)] overflow-hidden">
+              <div className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
+                style={{ width: totalCourses ? `${(completedCourses / totalCourses) * 100}%` : "0%" }} />
+            </div>
+          </div>
+
+          {profile.courseSchedule.map((sem, si) => {
+            const semDone = sem.courses.filter(c => c.completed).length;
+            return (
+              <div key={si} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 bg-[var(--surface-secondary)] border-b border-[var(--border)]">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider">{sem.label}</h3>
+                  <span className="text-[10px] font-medium text-[var(--muted)]">{semDone}/{sem.courses.length}</span>
+                </div>
+                <div className="divide-y divide-[var(--border)]">
+                  {sem.courses.map((course, ci) => (
+                    <button key={ci} onClick={() => toggleCourse(si, ci)}
+                      className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-[var(--surface-secondary)] transition-colors">
+                      <div className={`h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                        course.completed ? "bg-[var(--accent)] border-[var(--accent)] text-white" : "border-[var(--border)]"
+                      }`}>
+                        {course.completed && <Check size={12} />}
+                      </div>
+                      <span className={`text-sm ${course.completed ? "line-through text-[var(--muted)]" : ""}`}>
+                        {course.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      <SaveButton saving={saving} saved={saved} onSave={onSave} />
+    </div>
+  );
+}
+
+/* ─── Reusable Components ───────────────────────── */
 
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -249,18 +497,56 @@ function Section({ title, icon, children }: { title: string; icon?: React.ReactN
   );
 }
 
-function Field({ label, value, onChange, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
+function Field({ label, value, onChange, placeholder, required }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">{label}</label>
+      <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
       <input
         className="w-full h-10 rounded-lg border border-[var(--border)] bg-transparent px-3 text-sm outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/10"
         value={value || ""}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
       />
+    </div>
+  );
+}
+
+function TagField({ label, items, onChange }: {
+  label: string; items: string[]; onChange: (items: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  return (
+    <div className="space-y-2">
+      <label className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">{label}</label>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {items.map(item => (
+          <button key={item} onClick={() => onChange(items.filter(v => v !== item))}
+            className="group inline-flex items-center gap-1.5 rounded-lg bg-[var(--background-secondary)] px-3 py-1.5 text-xs font-medium hover:bg-red-50 hover:text-red-500 transition-all">
+            {item} <X size={12} className="opacity-40 group-hover:opacity-100" />
+          </button>
+        ))}
+      </div>
+      <form onSubmit={e => { e.preventDefault(); const v = draft.trim(); if (!v) return; onChange([...items, v]); setDraft(""); }}>
+        <input value={draft} onChange={e => setDraft(e.target.value)}
+          placeholder={`Add ${label.toLowerCase()}...`}
+          className="h-10 w-full rounded-lg border border-[var(--border)] bg-transparent px-3 text-xs font-medium outline-none focus:border-[var(--accent)] transition-all" />
+      </form>
+    </div>
+  );
+}
+
+function SaveButton({ saving, saved, onSave }: { saving: boolean; saved: boolean; onSave: () => void }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <button onClick={onSave} disabled={saving}
+        className="btn-primary h-10 px-6 text-sm flex items-center gap-2">
+        {saving ? <Loader2 size={14} className="animate-spin" /> :
+          saved ? <><Check size={14} /> Saved</> : <><Save size={14} /> Save changes</>}
+      </button>
     </div>
   );
 }

@@ -18,31 +18,33 @@ export async function POST(req: Request) {
         const roadmap = await aiService.generateRoadmap(userData);
 
         if (prisma) {
+          const profileData = {
+            fullName: userData.name || "",
+            university: userData.university || "",
+            degree: userData.degree || "",
+            minor: userData.minor || "",
+            gpa: userData.gpa || "",
+            yearOfStudy: userData.yearOfStudy || "",
+            graduating: userData.graduating || "",
+            studentType: userData.studentType || "",
+            countryOfOrigin: userData.countryOfOrigin || "",
+            visaStatus: userData.visaStatus || "",
+            sponsorshipNeeded: userData.sponsorshipNeeded || "",
+            dreamRole: userData.dreamRole || "",
+            targetIndustries: userData.targetIndustries || "",
+            targetCompanies: userData.targetCompanies || "",
+            preferredLocations: userData.preferredLocations || "",
+            willingToRelocate: userData.willingToRelocate || "",
+            linkedinUrl: userData.linkedinUrl || "",
+            portfolioUrl: userData.portfolioUrl || "",
+            courseScheduleJson: userData.courseSchedule ? JSON.stringify(userData.courseSchedule) : "",
+            profileJson: JSON.stringify(userData),
+          };
+
           await prisma.studentProfile.upsert({
             where: { userId: appUser.id },
-            update: {
-              fullName: userData.name || "",
-              university: userData.university || "",
-              degree: userData.degree || "",
-              yearOfStudy: userData.yearOfStudy || "",
-              graduating: userData.graduating || "",
-              studentType: userData.studentType || "",
-              dreamRole: userData.dreamRole || "",
-              targetIndustries: userData.targetIndustries || "",
-              profileJson: JSON.stringify(userData),
-            },
-            create: {
-              userId: appUser.id,
-              fullName: userData.name || "",
-              university: userData.university || "",
-              degree: userData.degree || "",
-              yearOfStudy: userData.yearOfStudy || "",
-              graduating: userData.graduating || "",
-              studentType: userData.studentType || "",
-              dreamRole: userData.dreamRole || "",
-              targetIndustries: userData.targetIndustries || "",
-              profileJson: JSON.stringify(userData),
-            },
+            update: profileData,
+            create: { userId: appUser.id, ...profileData },
           });
 
           await prisma.roadmap.create({

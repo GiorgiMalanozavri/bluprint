@@ -29,31 +29,33 @@ export async function PATCH(request: Request) {
     const current = existing ? safeJsonParse(existing.profileJson, {}) : {};
     const next = { ...current, ...body };
 
+    const profileData = {
+      fullName: next.name || "",
+      university: next.university || "",
+      degree: next.degree || "",
+      minor: next.minor || "",
+      gpa: next.gpa || "",
+      yearOfStudy: next.yearOfStudy || "",
+      graduating: next.graduating || "",
+      studentType: next.studentType || "",
+      countryOfOrigin: next.countryOfOrigin || "",
+      visaStatus: next.visaStatus || "",
+      sponsorshipNeeded: next.sponsorshipNeeded || "",
+      dreamRole: next.dreamRole || "",
+      targetIndustries: next.targetIndustries || "",
+      targetCompanies: next.targetCompanies || "",
+      preferredLocations: next.preferredLocations || "",
+      willingToRelocate: next.willingToRelocate || "",
+      linkedinUrl: next.linkedinUrl || "",
+      portfolioUrl: next.portfolioUrl || "",
+      courseScheduleJson: next.courseSchedule ? JSON.stringify(next.courseSchedule) : "",
+      profileJson: JSON.stringify(next),
+    };
+
     const profile = await prisma.studentProfile.upsert({
       where: { userId: appUser.id },
-      update: {
-        fullName: next.name || "",
-        university: next.university || "",
-        degree: next.degree || "",
-        yearOfStudy: next.yearOfStudy || "",
-        graduating: next.graduating || "",
-        studentType: next.studentType || "",
-        dreamRole: next.dreamRole || "",
-        targetIndustries: next.targetIndustries || "",
-        profileJson: JSON.stringify(next),
-      },
-      create: {
-        userId: appUser.id,
-        fullName: next.name || "",
-        university: next.university || "",
-        degree: next.degree || "",
-        yearOfStudy: next.yearOfStudy || "",
-        graduating: next.graduating || "",
-        studentType: next.studentType || "",
-        dreamRole: next.dreamRole || "",
-        targetIndustries: next.targetIndustries || "",
-        profileJson: JSON.stringify(next),
-      },
+      update: profileData,
+      create: { userId: appUser.id, ...profileData },
     });
 
     return NextResponse.json({ profile: safeJsonParse(profile.profileJson, null) });
