@@ -118,7 +118,7 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
               <button onClick={fetchGoogleEvents} className="rounded-xl bg-[var(--accent)] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--accent-hover)] transition-colors shrink-0">
                 Pull
               </button>
-              <button onClick={syncToGoogle} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-600 transition-colors shrink-0">
+              <button onClick={syncToGoogle} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-500 transition-colors shrink-0">
                 Push
               </button>
             </div>

@@ -39,10 +39,10 @@ const FIRST_HOUR   = plannerHours[0];
 const LAST_HOUR    = plannerHours[plannerHours.length - 1];
 
 const TYPE_CONFIG = {
-  Class:    { icon: GraduationCap, card: "bg-blue-50 border-blue-100 text-[#111111]",    pill: "bg-blue-500 text-white",    bar: "bg-blue-500",    ring: "ring-blue-400"    },
-  Activity: { icon: Dumbbell,       card: "bg-[#eef6ff] border-[#2f80ed]/10 text-[#111111]", pill: "bg-[#2f80ed] text-white",  bar: "bg-[#2f80ed]",  ring: "ring-[#2f80ed]"  },
-  Study:    { icon: BookOpen,       card: "bg-violet-50 border-violet-100 text-[#111111]", pill: "bg-violet-500 text-white",  bar: "bg-violet-500",  ring: "ring-violet-400"  },
-  Work:     { icon: Briefcase,      card: "bg-emerald-50 border-emerald-100 text-[#111111]", pill: "bg-emerald-500 text-white", bar: "bg-emerald-500", ring: "ring-emerald-400" },
+  Class:    { icon: GraduationCap, card: "bg-blue-50 border-blue-100 text-[var(--foreground)]",    pill: "bg-blue-500 text-white",    bar: "bg-blue-500",    ring: "ring-blue-400"    },
+  Activity: { icon: Dumbbell,       card: "bg-sky-50 border-sky-100 text-[var(--foreground)]", pill: "bg-sky-500 text-white",  bar: "bg-sky-500",  ring: "ring-sky-400"  },
+  Study:    { icon: BookOpen,       card: "bg-violet-50 border-violet-100 text-[var(--foreground)]", pill: "bg-violet-500 text-white",  bar: "bg-violet-500",  ring: "ring-violet-400"  },
+  Work:     { icon: Briefcase,      card: "bg-emerald-50 border-emerald-100 text-[var(--foreground)]", pill: "bg-emerald-500 text-white", bar: "bg-emerald-500", ring: "ring-emerald-400" },
 } as const;
 
 const REPEAT_LABELS: Record<PlannerEntry["repeat"], string> = {
@@ -160,7 +160,7 @@ function TimeInput({ value, onChange }: { value: number; onChange: (v: number) =
         else { setErr(true); setRaw(fmtHour(value)); }
       }}
       onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") { setRaw(fmtHour(value)); (e.target as HTMLElement).blur(); } }}
-      className={`w-full rounded-lg border px-3 py-2 text-sm font-semibold outline-none transition-all ${err ? "border-red-400 bg-red-50 text-red-700" : "border-gray-200 bg-gray-50 text-gray-800 focus:border-blue-400 focus:bg-white"}`}
+      className={`w-full rounded-lg border px-3 py-2 text-sm font-semibold outline-none transition-all ${err ? "border-red-400/50 bg-red-500/15 text-red-400" : "border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:border-[var(--accent)] focus:bg-[var(--surface)]"}`}
       placeholder="9:00 AM"
     />
   );
@@ -189,38 +189,38 @@ function EventPopover({ entry, onClose, onUpdate, onDelete, onRepeatChange }: {
             <textarea rows={1} value={title} onChange={(e) => setTitle(e.target.value)} onBlur={saveTitle}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveTitle(); onClose(); } if (e.key === "Escape") onClose(); }}
               placeholder="New Event" autoFocus
-              className="w-full resize-none bg-transparent text-lg font-bold text-[#111111] outline-none placeholder:text-gray-300 leading-tight" />
+              className="w-full resize-none bg-transparent text-lg font-bold text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] leading-tight" />
           </div>
-          <button onClick={onClose} className="rounded-full p-1 text-gray-400 hover:bg-gray-100 mt-0.5 shrink-0 transition-colors"><X size={15} /></button>
+          <button onClick={onClose} className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--background-secondary)] mt-0.5 shrink-0 transition-colors"><X size={15} /></button>
         </div>
 
         {/* Date + time */}
-        <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50">
-            <Calendar size={13} className="text-gray-400 shrink-0" />
-            <span className="text-xs font-semibold text-gray-500 shrink-0">All-day</span>
+        <div className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] overflow-hidden">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface-secondary)]/50">
+            <Calendar size={13} className="text-[var(--muted)] shrink-0" />
+            <span className="text-xs font-semibold text-[var(--muted)] shrink-0">All-day</span>
             <button onClick={() => onUpdate({ allDay: !entry.allDay })}
-              className={`ml-auto relative h-5 w-9 rounded-full transition-colors duration-200 ${entry.allDay ? "bg-blue-500" : "bg-gray-300"}`}>
+              className={`ml-auto relative h-5 w-9 rounded-full transition-colors duration-200 ${entry.allDay ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`}>
               <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200 ${entry.allDay ? "left-[18px]" : "left-0.5"}`} />
             </button>
           </div>
           {/* Date picker */}
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface)]">
             <div className="w-[13px] shrink-0" />
-            <span className="text-xs font-semibold text-gray-500 shrink-0">Date</span>
+            <span className="text-xs font-semibold text-[var(--muted)] shrink-0">Date</span>
             <input type="date" value={entry.date} onChange={(e) => onUpdate({ date: e.target.value })}
-              className="ml-auto bg-transparent text-xs font-semibold text-gray-700 outline-none" />
+              className="ml-auto bg-transparent text-xs font-semibold text-[var(--foreground)] outline-none" />
           </div>
           {!entry.allDay && (
             <>
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/30">
+              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface-secondary)]/30">
                 <div className="w-[13px] shrink-0" />
-                <span className="text-xs font-semibold text-gray-500 shrink-0 w-12">From</span>
+                <span className="text-xs font-semibold text-[var(--muted)] shrink-0 w-12">From</span>
                 <TimeInput value={entry.start} onChange={(v) => onUpdate({ start: v, end: Math.max(entry.end, v + 0.5) })} />
               </div>
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface)]">
                 <div className="w-[13px] shrink-0" />
-                <span className="text-xs font-semibold text-gray-500 shrink-0 w-12">To</span>
+                <span className="text-xs font-semibold text-[var(--muted)] shrink-0 w-12">To</span>
                 <TimeInput value={entry.end} onChange={(v) => onUpdate({ end: Math.max(v, entry.start + 0.5) })} />
               </div>
             </>
@@ -229,13 +229,13 @@ function EventPopover({ entry, onClose, onUpdate, onDelete, onRepeatChange }: {
 
         {/* Type */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Calendar</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2">Calendar</p>
           <div className="grid grid-cols-2 gap-1.5">
             {(Object.keys(TYPE_CONFIG) as PlannerEntry["type"][]).map((t) => {
               const c = TYPE_CONFIG[t]; const TI = c.icon; const active = entry.type === t;
               return (
                 <button key={t} onClick={() => onUpdate({ type: t })}
-                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold border-2 transition-all ${active ? `${c.card} border-current shadow-sm` : "border-transparent bg-gray-50 text-gray-500 hover:bg-gray-100"}`}>
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold border-2 transition-all ${active ? `${c.card} border-current shadow-sm` : "border-transparent bg-[var(--surface-secondary)] text-[var(--muted)] hover:bg-[var(--background-secondary)]"}`}>
                   <TI size={12} />{t}
                 </button>
               );
@@ -244,39 +244,39 @@ function EventPopover({ entry, onClose, onUpdate, onDelete, onRepeatChange }: {
         </div>
 
         {/* Meta */}
-        <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50">
-            <Repeat2 size={13} className="text-gray-400 shrink-0" />
-            <span className="text-xs font-semibold text-gray-500 shrink-0">Repeat</span>
+        <div className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] overflow-hidden">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface-secondary)]/50">
+            <Repeat2 size={13} className="text-[var(--muted)] shrink-0" />
+            <span className="text-xs font-semibold text-[var(--muted)] shrink-0">Repeat</span>
             <select value={entry.repeat} onChange={(e) => onRepeatChange(entry, e.target.value as PlannerEntry["repeat"])}
-              className="ml-auto bg-transparent text-xs font-semibold text-gray-700 outline-none text-right">
+              className="ml-auto bg-transparent text-xs font-semibold text-[var(--foreground)] outline-none text-right">
               {(Object.entries(REPEAT_LABELS) as [PlannerEntry["repeat"], string][]).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white">
-            <Bell size={13} className="text-gray-400 shrink-0" />
-            <span className="text-xs font-semibold text-gray-500 shrink-0">Alert</span>
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface)]">
+            <Bell size={13} className="text-[var(--muted)] shrink-0" />
+            <span className="text-xs font-semibold text-[var(--muted)] shrink-0">Alert</span>
             <select value={entry.alert} onChange={(e) => onUpdate({ alert: e.target.value as PlannerEntry["alert"] })}
-              className="ml-auto bg-transparent text-xs font-semibold text-gray-700 outline-none text-right">
+              className="ml-auto bg-transparent text-xs font-semibold text-[var(--foreground)] outline-none text-right">
               {(Object.entries(ALERT_LABELS) as [PlannerEntry["alert"], string][]).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50">
-            <MapPin size={13} className="text-gray-400 shrink-0" />
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[var(--surface-secondary)]/50">
+            <MapPin size={13} className="text-[var(--muted)] shrink-0" />
             <input value={entry.location} onChange={(e) => onUpdate({ location: e.target.value })}
-              placeholder="Location" className="flex-1 bg-transparent text-xs font-semibold text-gray-700 outline-none placeholder:text-gray-300" />
+              placeholder="Location" className="flex-1 bg-transparent text-xs font-semibold text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]" />
           </div>
-          <div className="flex items-start gap-2.5 px-3 py-2.5 bg-white">
-            <AlignLeft size={13} className="text-gray-400 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2.5 px-3 py-2.5 bg-[var(--surface)]">
+            <AlignLeft size={13} className="text-[var(--muted)] shrink-0 mt-0.5" />
             <textarea value={entry.notes} onChange={(e) => onUpdate({ notes: e.target.value })}
               placeholder="Notes" rows={2}
-              className="flex-1 resize-none bg-transparent text-xs text-gray-700 font-semibold outline-none placeholder:text-gray-300 leading-relaxed" />
+              className="flex-1 resize-none bg-transparent text-xs text-[var(--foreground)] font-semibold outline-none placeholder:text-[var(--muted)] leading-relaxed" />
           </div>
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => { saveTitle(); onClose(); }} className="flex-1 rounded-xl bg-gray-900 py-2.5 text-xs font-bold text-white hover:bg-gray-800 active:scale-[0.98] transition-all">Done</button>
-          <button onClick={onDelete} className="rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-bold text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] transition-all">Delete</button>
+          <button onClick={() => { saveTitle(); onClose(); }} className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-xs font-bold text-white hover:bg-[var(--accent-hover)] active:scale-[0.98] transition-all">Done</button>
+          <button onClick={onDelete} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-xs font-bold text-[var(--muted)] hover:border-red-500/30 hover:bg-red-500/15 hover:text-red-400 active:scale-[0.98] transition-all">Delete</button>
         </div>
       </div>
     </div>
@@ -1078,7 +1078,7 @@ function CourseworkSection({ entries, setEntries }: { entries: PlannerEntry[]; s
               {!course.collapsed && (
                 <div className="border-t border-[var(--border)]">
                   {items.length === 0 && addingItemFor !== course.id && (
-                    <p className="text-xs text-[var(--muted)] px-4 py-4 text-center">No items yet — add manually or upload a syllabus</p>
+                    <p className="text-xs text-[var(--muted)] px-4 py-4 text-center">No items yet. Add manually or upload a syllabus</p>
                   )}
                   <div className="divide-y divide-[var(--border)]/60">
                     {items.map(item => (

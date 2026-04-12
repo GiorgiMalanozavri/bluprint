@@ -638,7 +638,7 @@ function categoryColor(cat: string) {
     SKILLS: "bg-slate-50 text-slate-600 border-slate-100",
     COURSEWORK: "bg-pink-50 text-pink-600 border-pink-100",
   };
-  return colors[cat] || "bg-gray-50 text-gray-500 border-gray-100";
+  return colors[cat] || "bg-slate-50 text-slate-500 border-slate-100";
 }
 
 function CategoryPill({ category }: { category: string }) {

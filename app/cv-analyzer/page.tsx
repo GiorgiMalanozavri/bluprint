@@ -387,7 +387,7 @@ export default function CVAnalyzerPage() {
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2 px-1 py-2">
                       <CheckCircle2 size={14} className="text-emerald-500" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Strengths</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Strengths</span>
                       <span className="text-[10px] font-medium text-[var(--muted)]">{cvAnalysis.strengths.length}</span>
                     </div>
                     {cvAnalysis.strengths.map((item: string, i: number) => (
@@ -400,7 +400,7 @@ export default function CVAnalyzerPage() {
                 {(cvAnalysis.improvements?.length > 0) && (
                   <div className="space-y-0.5 pt-4">
                     <div className="flex items-center gap-2 px-1 py-2">
-                      <AlertCircle size={14} className="text-amber-500" />
+                      <AlertCircle size={14} className="text-amber-600" />
                       <span className="text-xs font-bold uppercase tracking-wider text-amber-600">To Improve</span>
                       <span className="text-[10px] font-medium text-[var(--muted)]">{cvAnalysis.improvements.length}</span>
                     </div>
@@ -415,7 +415,7 @@ export default function CVAnalyzerPage() {
                   <div className="space-y-0.5 pt-4">
                     <div className="flex items-center gap-2 px-1 py-2">
                       <XCircle size={14} className="text-red-500" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-red-600">Missing</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-red-500">Missing</span>
                       <span className="text-[10px] font-medium text-[var(--muted)]">{cvAnalysis.missing.length}</span>
                     </div>
                     {cvAnalysis.missing.map((item: string, i: number) => (
@@ -454,7 +454,7 @@ export default function CVAnalyzerPage() {
                     </div>
                     {(cvAnalysis.strengths?.length > 0) && (
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-2">What Stands Out</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-2">What Stands Out</p>
                         <div className="space-y-2">
                           {cvAnalysis.strengths.slice(0, 3).map((s: string, i: number) => (
                             <div key={i} className="flex items-start gap-2"><Star size={12} className="text-emerald-500 mt-1 shrink-0" /><p className="text-[13px] text-[var(--foreground)]">{s}</p></div>
@@ -467,7 +467,7 @@ export default function CVAnalyzerPage() {
                         <p className="text-[10px] font-bold uppercase tracking-wider text-red-500 mb-2">Red Flags</p>
                         <div className="space-y-2">
                           {[...(cvAnalysis.improvements || []).slice(0, 2), ...(cvAnalysis.missing || []).slice(0, 2)].map((s: string, i: number) => (
-                            <div key={i} className="flex items-start gap-2"><AlertCircle size={12} className="text-red-400 mt-1 shrink-0" /><p className="text-[13px] text-[var(--foreground)]">{s}</p></div>
+                            <div key={i} className="flex items-start gap-2"><AlertCircle size={12} className="text-red-500 mt-1 shrink-0" /><p className="text-[13px] text-[var(--foreground)]">{s}</p></div>
                           ))}
                         </div>
                       </div>
@@ -475,7 +475,7 @@ export default function CVAnalyzerPage() {
                     <div className="rounded-xl bg-[var(--background)] border border-[var(--border)] p-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] mb-1">Verdict</p>
                       <p className="text-[14px] font-medium text-[var(--foreground)]">
-                        {score >= 75 ? "Would move to phone screen." : score >= 50 ? "Maybe pile — depends on the applicant pool." : "Would pass. Needs a rewrite before applying."}
+                        {score >= 75 ? "Would move to phone screen." : score >= 50 ? "Maybe pile, depends on the applicant pool." : "Would pass. Needs a rewrite before applying."}
                       </p>
                       <p className="mt-2 text-[12px] text-[var(--muted)] leading-relaxed">
                         {score >= 75 ? "This CV communicates value quickly. Minor tweaks could push it to the top of the stack."
@@ -504,7 +504,7 @@ export default function CVAnalyzerPage() {
                       </div>
                       <div className="p-5 space-y-3">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-red-400 mb-1">Before</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-red-500 mb-1">Before</p>
                           <p className="text-[13px] text-[var(--muted)] leading-relaxed line-through decoration-red-300">{rw.before || rw.original}</p>
                         </div>
                         <div>
