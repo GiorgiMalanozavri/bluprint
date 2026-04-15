@@ -146,6 +146,8 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       });
+      // Sync to localStorage so dashboard and AI sidebar always have latest data
+      userStorage.setItem("bluprint_profile_review", JSON.stringify(profile));
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch { /* ignore */ }

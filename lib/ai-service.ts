@@ -178,11 +178,37 @@ ${rawText}
   }
 
   async generateRoadmap(profile: unknown): Promise<Roadmap> {
+    const p = profile as any;
+    const isInternational = p?.studentType === "International";
+
     return await this.generateStructured(
       `
-You are generating a practical career roadmap for a university student.
-Use this confirmed profile:
+You are generating a practical, personalized career roadmap for a university student.
+
+STUDENT PROFILE:
 ${JSON.stringify(profile)}
+
+PERSONALIZATION INSTRUCTIONS:
+${isInternational ? `
+- This is an INTERNATIONAL student${p.countryOfOrigin ? ` from ${p.countryOfOrigin}` : ""}.
+- ${p.visaStatus ? `Current visa: ${p.visaStatus}. Include visa-specific tasks (OPT application timelines, CPT eligibility, work authorization deadlines).` : "Include general visa/work authorization guidance."}
+- ${p.sponsorshipNeeded === "Yes" ? "They NEED employer sponsorship. Prioritize companies known to sponsor. Include H-1B timeline awareness." : ""}
+- Add VISA category tasks at appropriate semester milestones.
+` : ""}
+${p.dreamRole ? `- Target role: ${p.dreamRole}. Every task should connect to landing this role.` : ""}
+${p.targetIndustries ? `- Target industries: ${p.targetIndustries}. Reference industry-specific recruiting timelines (e.g., finance recruits early fall, tech year-round).` : ""}
+${p.targetCompanies ? `- Target companies: ${p.targetCompanies}. Include company-specific prep (e.g., case interviews for consulting, LeetCode for tech).` : ""}
+${p.gpa ? `- GPA: ${p.gpa}. ${parseFloat(p.gpa) < 3.0 ? "Suggest GPA improvement strategies." : "GPA is competitive."}` : ""}
+${p.preferredLocations ? `- Preferred locations: ${p.preferredLocations}. Factor in regional job markets and cost of living.` : ""}
+${p.courseSchedule?.length ? `
+- They have provided their course schedule with ${p.courseSchedule.reduce((s: number, sem: any) => s + sem.courses.length, 0)} total courses.
+  Completed: ${p.courseSchedule.reduce((s: number, sem: any) => s + sem.courses.filter((c: any) => c.completed).length, 0)} courses.
+  Remaining: ${p.courseSchedule.reduce((s: number, sem: any) => s + sem.courses.filter((c: any) => !c.completed).length, 0)} courses.
+  Use this to understand their academic progress and align career tasks with their academic timeline.
+` : ""}
+${p.certifications?.length ? `- Has certifications: ${p.certifications.join(", ")}. Build on these.` : ""}
+${p.skills?.length ? `- Current skills: ${p.skills.join(", ")}. Identify skill gaps for their target role.` : ""}
+${p.linkedinUrl ? "- Has a LinkedIn profile. Include LinkedIn optimization tasks." : "- No LinkedIn yet. Include creating a LinkedIn profile as an early task."}
 
 Return a JSON object with:
 - semesters: array of {semester: string, status: "completed"|"current"|"upcoming", tasks: [{id, title, category, effort, why}]}
@@ -191,15 +217,17 @@ Return a JSON object with:
 - strengths: string[]
 - improvements: string[]
 - missing: string[]
-- nudge: string (one concise sentence for the dashboard)
+- nudge: string (one concise personalized sentence for the dashboard)
 
 Rules:
 - 4 semesters minimum
-- tasks must be specific and realistic for a student
+- tasks must be specific and realistic, referencing their actual target role/industry/companies
 - categories from: INTERNSHIP, CV, NETWORKING, ACADEMICS, VISA, SKILLS
 - effort should be short plain English like "30 mins" or "2 hours"
-- why should explain timing/strategy
+- why should explain timing/strategy and be specific to their situation
 - ids should be unique strings like "t1", "t2", etc.
+- ${isInternational ? "MUST include at least 2-3 VISA category tasks spread across semesters" : ""}
+- Monthly tasks should be the most urgent, actionable items for THIS month
       `,
       roadmapSchema
     );
@@ -230,6 +258,8 @@ CRITICAL RULES:
 
 STUDENT PROFILE:
 ${JSON.stringify(profile)}
+${(profile as any)?.studentType === "International" ? `\nNOTE: This is an international student${(profile as any)?.countryOfOrigin ? ` from ${(profile as any).countryOfOrigin}` : ""}${(profile as any)?.visaStatus ? `, visa: ${(profile as any).visaStatus}` : ""}. Consider mentioning work authorization status on CV if not present.` : ""}
+${(profile as any)?.targetCompanies ? `Target companies: ${(profile as any).targetCompanies}. Tailor suggestions toward these companies' preferences.` : ""}
 
 FULL CV TEXT:
 ${resumeText}
@@ -288,13 +318,46 @@ Be realistic about the match score.
         }
       }
 
+      // Build personalized context hints from profile
+      const prof = context.profile || {};
+      let profileHints = "";
+      if (prof.name) profileHints += `Student: ${prof.name}. `;
+      if (prof.university) profileHints += `At ${prof.university}. `;
+      if (prof.degree) profileHints += `Studying ${prof.degree}${prof.minor ? ` with minor in ${prof.minor}` : ""}. `;
+      if (prof.yearOfStudy) profileHints += `${prof.yearOfStudy}. `;
+      if (prof.dreamRole) profileHints += `Targeting: ${prof.dreamRole}. `;
+      if (prof.targetIndustries) profileHints += `Industries: ${prof.targetIndustries}. `;
+      if (prof.targetCompanies) profileHints += `Target companies: ${prof.targetCompanies}. `;
+      if (prof.studentType === "International") {
+        profileHints += `INTERNATIONAL student`;
+        if (prof.countryOfOrigin) profileHints += ` from ${prof.countryOfOrigin}`;
+        if (prof.visaStatus) profileHints += `, visa: ${prof.visaStatus}`;
+        if (prof.sponsorshipNeeded) profileHints += `, needs sponsorship: ${prof.sponsorshipNeeded}`;
+        profileHints += ". When relevant, factor in visa timelines, work authorization, and sponsorship. ";
+      }
+      if (prof.gpa) profileHints += `GPA: ${prof.gpa}. `;
+      if (prof.preferredLocations) profileHints += `Preferred locations: ${prof.preferredLocations}. `;
+      if (prof.skills?.length) profileHints += `Skills: ${prof.skills.join(", ")}. `;
+      if (prof.certifications?.length) profileHints += `Certifications: ${prof.certifications.join(", ")}. `;
+      if (prof.courseSchedule?.length) {
+        const totalCourses = prof.courseSchedule.reduce((s: number, sem: any) => s + sem.courses.length, 0);
+        const completed = prof.courseSchedule.reduce((s: number, sem: any) => s + sem.courses.filter((c: any) => c.completed).length, 0);
+        profileHints += `Course progress: ${completed}/${totalCourses} courses completed. `;
+      }
+
       // Call the model directly and parse manually for better error handling
       const rawText = await this.callModel(`
 You are bluprint's AI assistant for students. You can TAKE ACTIONS on behalf of the student.
 Be direct, plain-English, useful, and specific. Keep answers concise but actionable.
-Use the student context below to personalize your response.
+Use the student context below to personalize EVERY response.
 If the user has coursework data, reference their actual classes, grades, and deadlines.
 If the user has schedule data, reference their actual calendar events.
+
+IMPORTANT PERSONALIZATION: ${profileHints}
+- Always tailor advice to their specific target role, industry, and companies when known.
+- For international students, proactively mention visa/sponsorship implications when relevant.
+- Reference their actual skills and suggest specific gaps to fill for their target role.
+- If they have course schedule data, reference their academic progress.
 
 AVAILABLE ACTIONS (include in "actions" array when the user asks to create/add/schedule something):
 

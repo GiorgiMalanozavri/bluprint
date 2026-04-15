@@ -48,6 +48,17 @@ export default function DashboardPage() {
 
       setCurrentUserId(result.user?.id || "");
 
+      // If API returned profile/roadmap from DB, sync to localStorage for other pages
+      if (result.profile) {
+        userStorage.setItem("bluprint_profile_review", JSON.stringify(result.profile));
+      }
+      if (result.roadmap) {
+        userStorage.setItem("bluprint_full_roadmap", JSON.stringify(result.roadmap));
+        if (result.roadmap.semesters) {
+          userStorage.setItem("bluprint_ai_roadmap", JSON.stringify(result.roadmap.semesters));
+        }
+      }
+
       // Fallback to userStorage if API returns no data (Vercel has no DB)
       if (!result.roadmap && !result.profile) {
         const localProfile = userStorage.getItem("bluprint_profile_review");
