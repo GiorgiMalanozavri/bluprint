@@ -11,8 +11,24 @@ export async function GET() {
       // Return profile from localStorage-synced onboarding if available
       return NextResponse.json({ profile: { name: appUser.name, email: appUser.email } });
     }
-    const profile = await prisma.studentProfile.findUnique({ where: { userId: appUser.id } });
-    return NextResponse.json({ profile: profile ? safeJsonParse(profile.profileJson, null) : null });
+    const dbProfile = await prisma.studentProfile.findUnique({ where: { userId: appUser.id } });
+    if (!dbProfile) return NextResponse.json({ profile: null });
+    const profile = safeJsonParse(dbProfile.profileJson, {}) as any;
+    // Ensure array fields always have defaults
+    profile.skills = profile.skills || [];
+    profile.experiences = profile.experiences || [];
+    profile.education = profile.education || [];
+    profile.languages = profile.languages || [];
+    profile.certifications = profile.certifications || [];
+    profile.extracurriculars = profile.extracurriculars || [];
+    profile.courseSchedule = profile.courseSchedule || [];
+    if (dbProfile.courseScheduleJson) {
+      const courses = safeJsonParse(dbProfile.courseScheduleJson, []);
+      if (courses.length > 0 && profile.courseSchedule.length === 0) {
+        profile.courseSchedule = courses;
+      }
+    }
+    return NextResponse.json({ profile });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Server error" }, { status: 500 });
   }

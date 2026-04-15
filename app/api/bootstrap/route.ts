@@ -23,11 +23,19 @@ export async function GET() {
         where: { userId: appUser.id },
       });
       if (dbProfile) {
-        profile = safeJsonParse(dbProfile.profileJson, null);
+        profile = safeJsonParse(dbProfile.profileJson, null) || {};
+        // Ensure all array fields have defaults
+        profile.skills = profile.skills || [];
+        profile.experiences = profile.experiences || [];
+        profile.education = profile.education || [];
+        profile.languages = profile.languages || [];
+        profile.certifications = profile.certifications || [];
+        profile.extracurriculars = profile.extracurriculars || [];
+        profile.courseSchedule = profile.courseSchedule || [];
         // Merge in course schedule if stored separately
-        if (dbProfile.courseScheduleJson && profile) {
+        if (dbProfile.courseScheduleJson) {
           const courses = safeJsonParse(dbProfile.courseScheduleJson, []);
-          if (courses.length > 0 && (!profile.courseSchedule || profile.courseSchedule.length === 0)) {
+          if (courses.length > 0 && profile.courseSchedule.length === 0) {
             profile.courseSchedule = courses;
           }
         }

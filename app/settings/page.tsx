@@ -77,20 +77,34 @@ function parseCourseSchedule(raw: string): ParsedSemester[] {
   const semesters: ParsedSemester[] = [];
   let current: ParsedSemester | null = null;
   const semesterPattern = /^(semester|year|fall|spring|summer|winter|freshman|sophomore|junior|senior|1st|2nd|3rd|4th|first|second|third|fourth)/i;
-  const creditPattern = /^\d+\s*(credits?|hrs?|hours?|cr\.?)\s*$/i;
+  const skipPatterns = [
+    /^\d+\s*(credits?|hrs?|hours?|cr\.?|units?)\s*$/i,
+    /^\d+$/,
+    /^total/i,
+    /^(minimum|maximum|required|elective|prerequisite|corequisite|co-requisite|requirement|completion|program|curriculum|catalog|note|students? (must|should|are|may|can|will|need)|gpa|grade|advisor|advising|minor|major|concentration|track|option|pathway|emphasis|all students|select|choose|complete|maintain|earn|satisfy|fulfill|submit|apply|consult|contact|check|see|refer|visit|upon|subject|pending|with a|at least|or higher|or above|no later|prior to|in addition|such as|including|department|college|school|office|approval|permission|written|hours from|credit hours|total hours|hours of)/i,
+    /^[\-\*\u2022]\s*(minimum|students|gpa|must|all|complete|maintain|select|choose|earn|at least)/i,
+    /^(https?:\/\/|www\.)/i,
+    /^\(?\d+[-–]\d+\s*(credits?|hrs?)\)?$/i,
+    /^[A-Z]{2,5}\s*\d{3,4}\s*$/i,
+  ];
 
   for (const line of lines) {
     if (semesterPattern.test(line) || /^(year\s*\d|sem\s*\d)/i.test(line)) {
       current = { label: line, courses: [] };
       semesters.push(current);
-    } else if (current) {
-      if (creditPattern.test(line) || line.length < 3 || /^\d+$/.test(line) || /^total/i.test(line)) continue;
+      continue;
+    }
+    if (skipPatterns.some(p => p.test(line))) continue;
+    if (line.length < 4) continue;
+    if (line.replace(/[^a-zA-Z]/g, "").length < 3) continue;
+    if ((line.match(/,/g) || []).length > 3) continue;
+
+    if (current) {
       current.courses.push({ name: line, completed: false });
     } else {
-      if (!current) { current = { label: "Courses", courses: [] }; semesters.push(current); }
-      if (!creditPattern.test(line) && line.length >= 3 && !/^\d+$/.test(line) && !/^total/i.test(line)) {
-        current.courses.push({ name: line, completed: false });
-      }
+      current = { label: "Courses", courses: [] };
+      semesters.push(current);
+      current.courses.push({ name: line, completed: false });
     }
   }
   return semesters.filter(s => s.courses.length > 0);
