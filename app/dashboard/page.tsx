@@ -48,6 +48,13 @@ export default function DashboardPage() {
 
       setCurrentUserId(result.user?.id || "");
 
+      // If no profile exists anywhere, redirect to onboarding
+      const localProfile = userStorage.getItem("bluprint_profile_review");
+      if (!result.profile && !localProfile) {
+        router.push("/onboarding");
+        return;
+      }
+
       // If API returned profile/roadmap from DB, sync to localStorage for other pages
       if (result.profile) {
         userStorage.setItem("bluprint_profile_review", JSON.stringify(result.profile));

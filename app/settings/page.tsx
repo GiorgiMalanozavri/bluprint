@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Check, ChevronRight, FileText, GraduationCap, Loader2, Plus, Save, Trash2,
   Upload, User as UserIcon, BookOpen, Calendar, X, Globe, Briefcase,
-  ClipboardPaste,
+  ClipboardPaste, RefreshCcw,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { userStorage } from "@/lib/user-storage";
@@ -111,6 +111,7 @@ function parseCourseSchedule(raw: string): ParsedSemester[] {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<"profile" | "career" | "courses" | "documents">("profile");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -193,8 +194,14 @@ export default function SettingsPage() {
   return (
     <AppShell>
       <div className="max-w-2xl mx-auto animate-fade-up">
-        <header className="mb-8">
+        <header className="mb-8 flex items-end justify-between">
           <h1 className="text-[2rem] font-semibold tracking-tight">Settings</h1>
+          <button onClick={() => {
+            userStorage.removeItem("bluprint_onboarding_complete");
+            router.push("/onboarding");
+          }} className="text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] flex items-center gap-1.5 transition-colors">
+            <RefreshCcw size={12} /> Redo onboarding
+          </button>
         </header>
 
         {/* Tabs */}
