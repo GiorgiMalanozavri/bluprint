@@ -80,6 +80,49 @@ const GRAD_OPTIONS = (() => {
   return options;
 })();
 
+const UNIVERSITY_OPTIONS = [
+  "MIT", "Stanford University", "Harvard University", "Yale University", "Princeton University",
+  "Columbia University", "University of Pennsylvania", "Cornell University", "Brown University",
+  "Duke University", "Northwestern University", "University of Chicago", "Johns Hopkins University",
+  "UC Berkeley", "UCLA", "UC San Diego", "UC Davis", "UC Irvine",
+  "University of Michigan", "University of Virginia", "Georgia Tech", "Carnegie Mellon University",
+  "University of Texas at Austin", "University of Florida", "Penn State", "Ohio State University",
+  "University of Illinois Urbana-Champaign", "University of Wisconsin-Madison",
+  "University of Washington", "University of North Carolina", "NYU", "Boston University",
+  "University of Southern California", "Purdue University", "Indiana University",
+  "Michigan State University", "Arizona State University", "University of Arizona",
+  "University of Colorado Boulder", "University of Maryland", "Rutgers University",
+  "University of Minnesota", "University of Pittsburgh", "Northeastern University",
+  "George Washington University", "American University", "Emory University",
+  "Vanderbilt University", "Rice University", "University of Notre Dame",
+  "Tulane University", "University of Miami", "Florida State University",
+  "Texas A&M University", "University of Georgia", "Clemson University",
+  "Virginia Tech", "Wake Forest University", "Lehigh University",
+  "Worcester Polytechnic Institute", "RPI", "Drexel University",
+  "Illinois Institute of Technology", "Stevens Institute of Technology",
+];
+
+const DEGREE_OPTIONS = [
+  "B.S. Computer Science", "B.A. Computer Science", "B.S. Data Science",
+  "B.S. Information Technology", "B.S. Software Engineering", "B.S. Cybersecurity",
+  "B.S. Electrical Engineering", "B.S. Mechanical Engineering", "B.S. Civil Engineering",
+  "B.S. Chemical Engineering", "B.S. Biomedical Engineering", "B.S. Aerospace Engineering",
+  "B.S. Industrial Engineering", "B.S. Environmental Engineering",
+  "B.A. Business Administration", "B.S. Business Administration", "B.B.A. Finance",
+  "B.B.A. Marketing", "B.B.A. Management", "B.B.A. Accounting",
+  "B.S. Economics", "B.A. Economics", "B.S. Mathematics", "B.A. Mathematics",
+  "B.S. Statistics", "B.S. Physics", "B.S. Chemistry", "B.S. Biology",
+  "B.A. Psychology", "B.A. Political Science", "B.A. International Relations",
+  "B.A. English", "B.A. History", "B.A. Communications", "B.A. Journalism",
+  "B.A. Sociology", "B.A. Philosophy", "B.A. Art History",
+  "B.F.A. Graphic Design", "B.F.A. Film", "B.A. Music",
+  "B.S. Nursing", "B.S. Public Health", "B.A. Pre-Med",
+  "M.S. Computer Science", "M.B.A.", "M.S. Data Science",
+  "M.S. Finance", "M.A. Economics", "M.S. Engineering",
+  "Ph.D. Computer Science", "Ph.D. Engineering", "Ph.D. Economics",
+  "J.D. (Law)", "M.D. (Medicine)",
+];
+
 const INDUSTRY_OPTIONS = [
   "Technology", "Finance", "Consulting", "Healthcare", "Education",
   "Marketing", "Engineering", "Law", "Media", "Government",
@@ -87,24 +130,44 @@ const INDUSTRY_OPTIONS = [
 ];
 
 const ROLE_SUGGESTIONS: Record<string, string[]> = {
-  "Computer Science": ["Software Engineer", "Data Scientist", "Product Manager", "ML Engineer", "DevOps Engineer"],
-  "Business": ["Management Consultant", "Investment Banker", "Product Manager", "Business Analyst", "Marketing Manager"],
-  "Finance": ["Investment Banker", "Financial Analyst", "Quantitative Analyst", "Portfolio Manager", "Risk Analyst"],
+  "Computer Science": ["Software Engineer", "Data Scientist", "Product Manager", "ML Engineer", "DevOps Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer"],
+  "Data Science": ["Data Scientist", "Data Analyst", "ML Engineer", "Data Engineer", "Business Intelligence Analyst"],
+  "Business": ["Management Consultant", "Investment Banker", "Product Manager", "Business Analyst", "Marketing Manager", "Operations Manager"],
+  "Finance": ["Investment Banker", "Financial Analyst", "Quantitative Analyst", "Portfolio Manager", "Risk Analyst", "Private Equity Analyst"],
+  "Accounting": ["Auditor", "Tax Consultant", "Financial Controller", "Forensic Accountant", "CPA"],
+  "Marketing": ["Marketing Manager", "Brand Strategist", "Digital Marketing Specialist", "Content Strategist", "Growth Marketing"],
   "Engineering": ["Mechanical Engineer", "Civil Engineer", "Systems Engineer", "Project Manager", "R&D Engineer"],
+  "Electrical Engineering": ["Electrical Engineer", "Hardware Engineer", "Embedded Systems Engineer", "Controls Engineer"],
   "Economics": ["Economic Analyst", "Management Consultant", "Data Analyst", "Policy Analyst", "Investment Banker"],
   "Biology": ["Research Scientist", "Biotech Analyst", "Medical Writer", "Lab Manager", "Clinical Research Associate"],
-  "Psychology": ["UX Researcher", "HR Specialist", "Clinical Psychologist", "Data Analyst", "Product Manager"],
+  "Psychology": ["UX Researcher", "HR Specialist", "Clinical Psychologist", "Data Analyst", "Behavioral Scientist"],
   "Mathematics": ["Quantitative Analyst", "Data Scientist", "Actuary", "Software Engineer", "Research Scientist"],
-  "default": ["Software Engineer", "Management Consultant", "Data Analyst", "Product Manager", "Financial Analyst"],
+  "Political Science": ["Policy Analyst", "Government Affairs", "Lobbyist", "Campaign Manager", "Foreign Service Officer"],
+  "Communications": ["PR Specialist", "Social Media Manager", "Content Creator", "Journalist", "Communications Director"],
+  "Nursing": ["Registered Nurse", "Nurse Practitioner", "Clinical Nurse Specialist", "Healthcare Administrator"],
+  "Pre-Med": ["Physician", "Surgeon", "Medical Researcher", "Public Health Specialist"],
+  "default": ["Software Engineer", "Management Consultant", "Data Analyst", "Product Manager", "Financial Analyst", "Marketing Manager"],
 };
 
 const SKILL_SUGGESTIONS: Record<string, string[]> = {
-  "Software Engineer": ["Python", "JavaScript", "React", "Node.js", "SQL", "Git", "AWS", "Docker", "System Design"],
-  "Data Scientist": ["Python", "R", "SQL", "TensorFlow", "Pandas", "Statistics", "Machine Learning", "Tableau"],
-  "Product Manager": ["User Research", "Agile/Scrum", "SQL", "Wireframing", "A/B Testing", "Roadmapping", "Analytics"],
-  "Investment Banker": ["Financial Modeling", "Excel", "PowerPoint", "Valuation", "DCF Analysis", "M&A", "Bloomberg"],
-  "Management Consultant": ["PowerPoint", "Excel", "Case Studies", "Data Analysis", "Strategy", "Market Research"],
-  "default": ["Excel", "PowerPoint", "Communication", "Leadership", "Teamwork", "Problem Solving", "Data Analysis"],
+  "Software Engineer": ["Python", "JavaScript", "React", "Node.js", "SQL", "Git", "AWS", "Docker", "System Design", "TypeScript"],
+  "Data Scientist": ["Python", "R", "SQL", "TensorFlow", "Pandas", "Statistics", "Machine Learning", "Tableau", "Jupyter"],
+  "Product Manager": ["User Research", "Agile/Scrum", "SQL", "Wireframing", "A/B Testing", "Roadmapping", "Analytics", "Figma"],
+  "Investment Banker": ["Financial Modeling", "Excel", "PowerPoint", "Valuation", "DCF Analysis", "M&A", "Bloomberg", "Capital Markets"],
+  "Management Consultant": ["PowerPoint", "Excel", "Case Studies", "Data Analysis", "Strategy", "Market Research", "Stakeholder Management"],
+  "Financial Analyst": ["Excel", "Financial Modeling", "SQL", "Bloomberg", "Valuation", "Forecasting", "VBA"],
+  "Data Analyst": ["SQL", "Excel", "Python", "Tableau", "Power BI", "Statistics", "Data Visualization"],
+  "Marketing Manager": ["Google Analytics", "SEO/SEM", "Social Media", "Content Strategy", "A/B Testing", "HubSpot", "Copywriting"],
+  "UX Researcher": ["User Interviews", "Surveys", "Usability Testing", "Figma", "Affinity Mapping", "Journey Mapping"],
+  "default": ["Excel", "PowerPoint", "Communication", "Leadership", "Teamwork", "Problem Solving", "Data Analysis", "Python"],
+};
+
+const COMPANY_SUGGESTIONS: Record<string, string[]> = {
+  "Technology": ["Google", "Apple", "Microsoft", "Amazon", "Meta", "Netflix", "Uber", "Airbnb", "Stripe", "Salesforce"],
+  "Finance": ["Goldman Sachs", "JPMorgan", "Morgan Stanley", "BlackRock", "Citadel", "Two Sigma", "Jane Street", "Bank of America"],
+  "Consulting": ["McKinsey", "BCG", "Bain", "Deloitte", "Accenture", "EY-Parthenon", "PwC", "KPMG", "Oliver Wyman"],
+  "Healthcare": ["Johnson & Johnson", "Pfizer", "UnitedHealth", "Mayo Clinic", "Kaiser", "Abbott", "Medtronic"],
+  "default": ["Google", "Goldman Sachs", "McKinsey", "Amazon", "JPMorgan", "Deloitte", "Apple", "Microsoft"],
 };
 
 const COUNTRY_OPTIONS = [
@@ -112,6 +175,9 @@ const COUNTRY_OPTIONS = [
   "Vietnam", "Japan", "Saudi Arabia", "Mexico", "Canada", "UK",
   "Germany", "France", "Pakistan", "Bangladesh", "Nepal", "Iran",
   "Taiwan", "Indonesia", "Georgia", "Colombia", "Egypt", "Kenya",
+  "Thailand", "Philippines", "Malaysia", "Sri Lanka", "Ethiopia",
+  "Ghana", "Morocco", "Argentina", "Chile", "Peru", "Russia",
+  "Ukraine", "Poland", "Italy", "Spain", "Australia", "New Zealand",
   "Other",
 ];
 
@@ -306,6 +372,19 @@ export default function OnboardingPage() {
     return ROLE_SUGGESTIONS.default;
   }, [profile.degree]);
 
+  const companySuggestions = useMemo(() => {
+    const industries = profile.targetIndustries ? profile.targetIndustries.split(", ").filter(Boolean) : [];
+    const existing = profile.targetCompanies ? profile.targetCompanies.split(", ").filter(Boolean) : [];
+    const companies = new Set<string>();
+    for (const ind of industries) {
+      for (const [key, list] of Object.entries(COMPANY_SUGGESTIONS)) {
+        if (ind.toLowerCase().includes(key.toLowerCase())) list.forEach(c => companies.add(c));
+      }
+    }
+    if (companies.size === 0) COMPANY_SUGGESTIONS.default.forEach(c => companies.add(c));
+    return [...companies].filter(c => !existing.includes(c));
+  }, [profile.targetIndustries, profile.targetCompanies]);
+
   const skillSuggestions = useMemo(() => {
     const r = profile.dreamRole;
     for (const [key, skills] of Object.entries(SKILL_SUGGESTIONS)) {
@@ -435,12 +514,14 @@ export default function OnboardingPage() {
                   <FormField label="Full name" required value={profile.name}
                     onChange={v => setProfile({ ...profile, name: v })} placeholder="Your full name" />
 
-                  <FormField label="University" required value={profile.university}
-                    onChange={v => setProfile({ ...profile, university: v })} placeholder="e.g. University of Michigan" />
+                  <ChipSelect label="University" required options={UNIVERSITY_OPTIONS}
+                    value={profile.university}
+                    onChange={v => setProfile({ ...profile, university: v })} searchable />
 
                   <div className="grid gap-5 sm:grid-cols-2">
-                    <FormField label="Degree / Major" required value={profile.degree}
-                      onChange={v => setProfile({ ...profile, degree: v })} placeholder="e.g. B.S. Computer Science" />
+                    <ChipSelect label="Degree / Major" required options={DEGREE_OPTIONS}
+                      value={profile.degree}
+                      onChange={v => setProfile({ ...profile, degree: v })} searchable />
                     <FormField label="Minor(s)" value={profile.minor}
                       onChange={v => setProfile({ ...profile, minor: v })} placeholder="e.g. Mathematics" />
                   </div>
@@ -586,18 +667,20 @@ export default function OnboardingPage() {
                     onChange={items => setProfile({ ...profile, targetIndustries: items.join(", ") })}
                     suggestions={INDUSTRY_OPTIONS} placeholder="Add industry..." />
 
-                  <FormField label="Target companies" value={profile.targetCompanies}
-                    onChange={v => setProfile({ ...profile, targetCompanies: v })}
-                    placeholder="e.g. Google, Goldman Sachs, McKinsey..." />
+                  <TagInput label="Target companies"
+                    items={profile.targetCompanies ? profile.targetCompanies.split(", ").filter(Boolean) : []}
+                    onChange={items => setProfile({ ...profile, targetCompanies: items.join(", ") })}
+                    suggestions={companySuggestions} placeholder="Add company..." />
 
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <FormField label="Preferred work locations" value={profile.preferredLocations}
-                      onChange={v => setProfile({ ...profile, preferredLocations: v })}
-                      placeholder="e.g. New York, San Francisco..." />
-                    <ToggleRow label="Willing to relocate?" options={["Yes", "No", "Maybe"]}
-                      value={profile.willingToRelocate}
-                      onChange={v => setProfile({ ...profile, willingToRelocate: v })} />
-                  </div>
+                  <TagInput label="Preferred work locations"
+                    items={profile.preferredLocations ? profile.preferredLocations.split(", ").filter(Boolean) : []}
+                    onChange={items => setProfile({ ...profile, preferredLocations: items.join(", ") })}
+                    suggestions={["New York", "San Francisco", "Seattle", "Austin", "Chicago", "Boston", "Los Angeles", "Washington DC", "Denver", "Atlanta", "Remote"]}
+                    placeholder="Add location..." />
+
+                  <ToggleRow label="Willing to relocate?" options={["Yes", "No", "Maybe"]}
+                    value={profile.willingToRelocate}
+                    onChange={v => setProfile({ ...profile, willingToRelocate: v })} />
                 </div>
 
                 <div className="surface-card p-6 space-y-5">
