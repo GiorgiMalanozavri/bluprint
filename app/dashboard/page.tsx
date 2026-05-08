@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, ChevronDown, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon, ThumbsUp, X as XIcon, Star, BookOpen } from "lucide-react";
+import { ArrowRight, Check, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon, ThumbsUp, X as XIcon, Star, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import type { MonthlyTask } from "@/components/PlannerBoard";
@@ -39,9 +39,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const load = async () => {
-      const response = await fetch("/api/bootstrap");
-      const result = await response.json();
-      if (!response.ok) {
+      let response: Response;
+      let result: any;
+      try {
+        response = await fetch("/api/bootstrap");
+        result = await response.json();
+      } catch {
+        // Network error — try localStorage fallback
+        const localProfile = userStorage.getItem("bluprint_profile_review");
+        if (localProfile) {
+          result = { profile: JSON.parse(localProfile), roadmap: null, chatThreads: [], user: { name: null, email: null } };
+          const localRoadmap = userStorage.getItem("bluprint_full_roadmap");
+          if (localRoadmap) result.roadmap = JSON.parse(localRoadmap);
+          response = { ok: true } as Response;
+        } else {
+          router.push("/sign-in");
+          return;
+        }
+      }
+      if (!response!.ok) {
         router.push("/sign-in");
         return;
       }
@@ -234,9 +250,36 @@ export default function DashboardPage() {
 
   if (loading || !data) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[var(--background)]">
-        <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
-      </div>
+      <AppShell>
+        <div className="max-w-2xl mx-auto animate-pulse pt-2">
+          {/* Skeleton: greeting */}
+          <div className="h-8 w-64 rounded-lg bg-[var(--background-secondary)] mb-3" />
+          <div className="h-4 w-96 rounded-lg bg-[var(--background-secondary)] mb-10" />
+          {/* Skeleton: quick-link cards */}
+          <div className="grid grid-cols-3 gap-3 mb-10">
+            {[0,1,2].map(i => (
+              <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
+                <div className="h-5 w-5 rounded bg-[var(--background-secondary)]" />
+                <div className="h-4 w-20 rounded bg-[var(--background-secondary)]" />
+                <div className="h-3 w-24 rounded bg-[var(--background-secondary)]" />
+              </div>
+            ))}
+          </div>
+          {/* Skeleton: task cards */}
+          <div className="space-y-3">
+            {[0,1,2,3].map(i => (
+              <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-5 rounded-md bg-[var(--background-secondary)]" />
+                  <div className="h-4 w-48 rounded bg-[var(--background-secondary)]" />
+                  <div className="ml-auto h-5 w-16 rounded-lg bg-[var(--background-secondary)]" />
+                </div>
+                <div className="h-3 w-72 rounded bg-[var(--background-secondary)]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </AppShell>
     );
   }
 
@@ -248,7 +291,7 @@ export default function DashboardPage() {
             {/* Welcome Header */}
             <header className="pt-2 pb-8">
               <h1 className="text-[2rem] font-semibold tracking-tight">
-                Good morning, {(data.profile?.name || data.user.name || "Student").split(" ")[0]}.
+                {(() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })()}, {(data.profile?.name || data.user.name || "Student").split(" ")[0]}.
               </h1>
               <p className="mt-2 text-sm text-[var(--muted)]">
                 {cvAnalysis?.summary || "Focus on the next few moves, not everything at once."}
@@ -667,30 +710,3 @@ function CategoryPill({ category }: { category: string }) {
   );
 }
 
-function AccordionRow({ title, tone, items }: { title: string; tone: "green" | "orange" | "red"; items: string[] }) {
-  const [open, setOpen] = useState(false);
-  const color = tone === "green" ? "text-emerald-600 bg-emerald-50" : tone === "orange" ? "text-sky-600 bg-sky-50" : "text-red-600 bg-red-50";
-
-  return (
-    <div className="rounded-xl border border-[var(--border)] overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 text-left">
-        <span className="text-sm font-medium">{title}</span>
-        <ChevronDown size={14} className={`text-[var(--muted)] transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-            <div className="px-4 pb-4 pt-0 space-y-2">
-              {items.map((item, idx) => (
-                <div key={idx} className={`rounded-lg px-3 py-2 text-xs font-medium ${color}`}>
-                  {item}
-                </div>
-              ))}
-              {items.length === 0 && <p className="text-[10px] text-[var(--muted)] italic">No data available.</p>}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}

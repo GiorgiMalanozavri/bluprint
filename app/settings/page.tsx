@@ -118,6 +118,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [syllabusModal, setSyllabusModal] = useState<{ open: boolean; file: File | null; name: string }>({ open: false, file: null, name: "" });
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -392,9 +393,46 @@ export default function SettingsPage() {
               </div>
               <UploadButton label="Upload Syllabus" accept=".pdf,.doc,.docx"
                 onUpload={(file) => {
-                  const className = prompt("Which class is this for? (e.g. Microeconomics)");
-                  addFile({ id: crypto.randomUUID(), name: file.name, type: "syllabus", className: className || undefined, uploadedAt: new Date().toISOString() });
+                  setSyllabusModal({ open: true, file, name: "" });
                 }} />
+
+              {/* Syllabus class name modal */}
+              {syllabusModal.open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                  <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl mx-4">
+                    <h3 className="text-sm font-semibold mb-1">Which class is this for?</h3>
+                    <p className="text-xs text-[var(--muted)] mb-4">Enter the course name so you can find it later.</p>
+                    <input
+                      autoFocus
+                      value={syllabusModal.name}
+                      onChange={e => setSyllabusModal(s => ({ ...s, name: e.target.value }))}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && syllabusModal.file) {
+                          addFile({ id: crypto.randomUUID(), name: syllabusModal.file.name, type: "syllabus", className: syllabusModal.name || undefined, uploadedAt: new Date().toISOString() });
+                          setSyllabusModal({ open: false, file: null, name: "" });
+                        }
+                      }}
+                      placeholder="e.g. Microeconomics"
+                      className="w-full h-11 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-4 text-sm outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/10 mb-4"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => setSyllabusModal({ open: false, file: null, name: "" })}
+                        className="flex-1 rounded-xl border border-[var(--border)] py-2.5 text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface-secondary)] transition-all">
+                        Cancel
+                      </button>
+                      <button onClick={() => {
+                        if (syllabusModal.file) {
+                          addFile({ id: crypto.randomUUID(), name: syllabusModal.file.name, type: "syllabus", className: syllabusModal.name || undefined, uploadedAt: new Date().toISOString() });
+                        }
+                        setSyllabusModal({ open: false, file: null, name: "" });
+                      }}
+                        className="flex-1 btn-primary py-2.5 text-xs">
+                        Add syllabus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Section>
           </div>
         )}

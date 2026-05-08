@@ -79,11 +79,7 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
     { href: "/pricing",        label: "Pricing" },
   ];
 
-  const notifications = [
-    { id: "n1", title: "This month is ready",     body: "You have updated tasks for this month." },
-    { id: "n2", title: "CV suggestions saved",    body: "Open CV Analyzer to review them." },
-    { id: "n3", title: "Roadmap reminder",         body: "You have 2 incomplete tasks this week." },
-  ];
+  const notifications: { id: string; title: string; body: string }[] = [];
 
   const initials = (user?.user_metadata?.full_name?.[0] || user?.email?.[0] || "U").toUpperCase();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
@@ -142,20 +138,29 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
                 <button onClick={() => setNotiOpen((o) => !o)}
                   className="grid h-8 w-8 place-items-center rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-secondary)] transition-all duration-150">
                   <Bell size={16} />
+                  {notifications.length > 0 && (
+                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[var(--accent)]" />
+                  )}
                 </button>
                 <AnimatePresence>
                   {notiOpen && (
                     <motion.div initial={{ opacity: 0, y: -4, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.97 }} transition={{ duration: 0.12 }}
                       className="absolute right-0 mt-2 w-72 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-lg">
                       <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">Notifications</p>
-                      <div className="space-y-0.5">
-                        {notifications.map((n) => (
-                          <div key={n.id} className="rounded-xl px-3 py-2.5 hover:bg-[var(--surface-secondary)] cursor-pointer transition-colors">
-                            <p className="text-sm font-medium text-[var(--foreground)]">{n.title}</p>
-                            <p className="mt-0.5 text-xs text-[var(--muted)]">{n.body}</p>
-                          </div>
-                        ))}
-                      </div>
+                      {notifications.length === 0 ? (
+                        <div className="px-3 py-6 text-center">
+                          <p className="text-xs text-[var(--muted)]">You&apos;re all caught up</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-0.5">
+                          {notifications.map((n) => (
+                            <div key={n.id} className="rounded-xl px-3 py-2.5 hover:bg-[var(--surface-secondary)] cursor-pointer transition-colors">
+                              <p className="text-sm font-medium text-[var(--foreground)]">{n.title}</p>
+                              <p className="mt-0.5 text-xs text-[var(--muted)]">{n.body}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
