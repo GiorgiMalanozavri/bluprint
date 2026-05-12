@@ -73,23 +73,25 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
     for (const entry of entries) {
       if ((entry as any).gcalId || entry.id.startsWith("gcal_")) continue;
       try {
-        const targetDate = new Date(entry.date + "T00:00:00");
-        const startDt = new Date(targetDate);
-        startDt.setHours(Math.floor(entry.start), (entry.start % 1) >= 0.5 ? 30 : 0, 0, 0);
-        const endDt = new Date(targetDate);
-        endDt.setHours(Math.floor(entry.end), (entry.end % 1) >= 0.5 ? 30 : 0, 0, 0);
+        const startHStr = String(Math.floor(entry.start)).padStart(2, '0');
+        const startMStr = (entry.start % 1) >= 0.5 ? "30" : "00";
+        const clientStartTime = `${entry.date}T${startHStr}:${startMStr}:00`;
 
-        await fetch("/api/calendar/google/events", {
+        const endHStr = String(Math.floor(entry.end)).padStart(2, '0');
+        const endMStr = (entry.end % 1) >= 0.5 ? "30" : "00";
+        const clientEndTime = `${entry.date}T${endHStr}:${endMStr}:00`;
+
+        const res = await fetch("/api/calendar/google/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...entry,
-            clientStartTime: startDt.toISOString(),
-            clientEndTime: endDt.toISOString(),
+            clientStartTime,
+            clientEndTime,
             clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           }),
         });
-        synced++;
+        if (res.ok) synced++;
       } catch { /* skip failed */ }
     }
     setSyncCount(synced);
