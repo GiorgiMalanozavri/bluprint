@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { userStorage } from "@/lib/user-storage";
 import type { SkillNode } from "@/lib/skill-tree";
-import { getCategoryColor, getCategoryIcon } from "@/lib/skill-tree";
+import { getCategoryColor } from "@/lib/skill-tree";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -54,7 +54,6 @@ export default function VerifyChatModal({
   if (!open || !mounted || !node) return null;
 
   const color = getCategoryColor(node.category);
-  const icon = getCategoryIcon(node.category);
 
   const send = async () => {
     const msg = input.trim();
@@ -119,9 +118,9 @@ export default function VerifyChatModal({
             style={{ background: `linear-gradient(135deg, ${color}08, ${color}15)` }}>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                  style={{ background: `${color}20` }}>
-                  {icon}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: `${color}20`, border: `2px solid ${color}40` }}>
+                  <ShieldCheck size={18} style={{ color }} />
                 </div>
                 <div>
                   <p className="text-[13px] font-semibold text-[var(--foreground)]">{node.title}</p>
@@ -159,12 +158,12 @@ export default function VerifyChatModal({
             {messages.length === 0 && (
               <div className="text-center py-8">
                 <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                  style={{ background: `${color}15` }}>
+                  style={{ background: `${color}15`, border: `2px solid ${color}30` }}>
                   <ShieldCheck size={22} style={{ color }} />
                 </div>
                 <p className="text-sm font-medium text-[var(--foreground)]">Ready to verify?</p>
                 <p className="mt-1.5 text-[11.5px] text-[var(--muted)] max-w-xs mx-auto leading-relaxed">
-                  Tell me what you did to complete &ldquo;{node.title}&rdquo;. Be specific — I&apos;ll ask follow-up questions.
+                  Tell me what you did to complete this task. Be specific — the AI will ask follow-up questions.
                 </p>
               </div>
             )}
@@ -209,7 +208,7 @@ export default function VerifyChatModal({
               >
                 <ShieldCheck size={18} className="text-emerald-500" />
                 <p className="text-[13px] font-medium text-emerald-600">
-                  Task verified! Node unlocked 🎉
+                  Task verified — node unlocked
                 </p>
               </motion.div>
             )}

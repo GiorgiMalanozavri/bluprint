@@ -1,12 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Crown, Lock, Play, Zap } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, Lock, Play, Trophy } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buildSkillTree,
   getCategoryColor,
-  getCategoryIcon,
   markNodeCompleted,
   markNodeInProgress,
   type SkillNode,
@@ -20,44 +19,58 @@ type SemesterData = {
   tasks: { id: string; title: string; category: string; effort: string; why: string }[];
 };
 
-/* ─── Constants ──────────────────────────────────── */
+const R = 22; // node radius
 
-const NODE_W = 160;
-const NODE_H = 72;
-const GAP_X = 200;
-const GAP_Y = 120;
-const TRUNK_PAD_TOP = 60;
-
-/* ─── Main Component ─────────────────────────────── */
-
-export default function SkillTreeView({
-  semesters,
-  dreamRole,
-}: {
-  semesters: SemesterData[];
-  dreamRole?: string;
-}) {
+export default function SkillTreeView({ semesters, dreamRole }: { semesters: SemesterData[]; dreamRole?: string }) {
   const [tree, setTree] = useState<SkillTreeData | null>(null);
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [verifyOpen, setVerifyOpen] = useState(false);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   const rebuild = useCallback(() => {
-    if (semesters.length === 0) return;
-    setTree(buildSkillTree(semesters, dreamRole));
+    if (semesters.length > 0) setTree(buildSkillTree(semesters, dreamRole));
   }, [semesters, dreamRole]);
 
   useEffect(() => { rebuild(); }, [rebuild]);
 
-  const handleNodeClick = useCallback((node: SkillNode) => {
-    if (node.status === "locked") return;
-    if (node.status === "completed") {
-      setSelectedNode(node);
-      return;
-    }
-    // Available or in_progress → open verify chat
+  // Center the tree on mount
+  useEffect(() => {
+    if (!tree || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const maxX = Math.max(tree.goalNode.x + 60, ...tree.allNodes.map(n => n.x)) + 100;
+    const maxY = Math.max(...tree.allNodes.map(n => n.y)) + 100;
+    const scaleX = rect.width / maxX;
+    const scaleY = rect.height / maxY;
+    const s = Math.min(scaleX, scaleY, 1) * 0.85;
+    setTransform({ x: 40, y: 20, scale: s });
+  }, [tree]);
+
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const d = e.deltaY > 0 ? 0.92 : 1.08;
+    setTransform(p => ({ ...p, scale: Math.max(0.25, Math.min(2.5, p.scale * d)) }));
+  }, []);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("[data-node]")) return;
+    setDragging(true);
+    dragStart.current = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+  }, [transform]);
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragging) return;
+    setTransform(p => ({ ...p, x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y }));
+  }, [dragging]);
+
+  const onMouseUp = useCallback(() => setDragging(false), []);
+
+  const handleClick = useCallback((node: SkillNode) => {
+    if (node.status === "locked" || node.id === "__start__" || node.id === "__goal__") return;
+    if (node.status === "completed") { setSelectedNode(node); return; }
     markNodeInProgress(node.id);
     setSelectedNode(node);
     setVerifyOpen(true);
@@ -66,11 +79,7 @@ export default function SkillTreeView({
 
   const handleVerified = useCallback((nodeId: string) => {
     markNodeCompleted(nodeId);
-    setTimeout(() => {
-      setVerifyOpen(false);
-      setSelectedNode(null);
-      rebuild();
-    }, 1800);
+    setTimeout(() => { setVerifyOpen(false); setSelectedNode(null); rebuild(); }, 1500);
   }, [rebuild]);
 
   if (!tree || tree.allNodes.length === 0) {
@@ -82,303 +91,254 @@ export default function SkillTreeView({
     );
   }
 
-  const maxRows = Math.max(...tree.branches.map((b) => b.nodes.length));
-  const cols = tree.branches.length;
-  const svgW = cols * GAP_X + NODE_W;
-  const svgH = (maxRows + 2) * GAP_Y + TRUNK_PAD_TOP + NODE_H;
-
-  // Node position helpers
-  const nx = (col: number) => col * GAP_X + GAP_X / 2;
-  const ny = (row: number) => (maxRows - row) * GAP_Y + TRUNK_PAD_TOP;
-  const goalX = nx(Math.floor(cols / 2));
-  const goalY = ny(maxRows + 1);
-
   return (
-    <div className="animate-fade-up">
-      {/* Header stats */}
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center">
-            <Zap size={16} className="text-[var(--accent)]" />
+    <div className="relative flex flex-col" style={{ height: "calc(100vh - 120px)" }}>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
+        style={{ background: "#0d1117", borderBottom: "1px solid #1e293b" }}>
+        <div className="flex items-center gap-3">
+          <span className="text-[13px] font-bold text-white tracking-tight">
+            {tree.completedCount} / {tree.totalCount}
+          </span>
+          <div className="w-32 h-1.5 rounded-full overflow-hidden" style={{ background: "#1e293b" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${(tree.completedCount / tree.totalCount) * 100}%`,
+                background: "linear-gradient(90deg, #a78bfa, #38bdf8)" }} />
           </div>
-          <div>
-            <p className="text-[22px] font-bold tracking-tight text-[var(--foreground)] leading-none">
-              {tree.completedCount}/{tree.totalCount}
-            </p>
-            <p className="text-[10px] text-[var(--muted)] mt-0.5">skills unlocked</p>
-          </div>
+          <span className="text-[10px] text-gray-500">nodes unlocked</span>
         </div>
-        <div className="flex-1 h-2 rounded-full bg-[var(--border)] overflow-hidden min-w-[120px]">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[#8b5cf6]"
-            initial={{ width: 0 }}
-            animate={{ width: `${(tree.completedCount / tree.totalCount) * 100}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-        </div>
-        {/* Branch legend */}
-        <div className="flex flex-wrap gap-2">
-          {tree.branches.map((b) => (
-            <span key={b.category}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border"
-              style={{
-                color: b.color,
-                borderColor: `${b.color}30`,
-                background: `${b.color}08`,
-              }}>
-              {getCategoryIcon(b.category)} {b.name}
+        <div className="flex gap-2">
+          {tree.branches.map(b => (
+            <span key={b.category} className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ color: b.color, background: `${b.color}18`, border: `1px solid ${b.color}30` }}>
+              {b.name}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Tree canvas */}
+      {/* Canvas */}
       <div ref={containerRef}
-        className="relative overflow-x-auto overflow-y-visible rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
-        style={{ minHeight: Math.min(svgH + 40, 700) }}>
-
-        <svg ref={svgRef} width={svgW} height={svgH}
-          className="mx-auto block" style={{ minWidth: svgW }}>
+        className="flex-1 overflow-hidden rounded-b-2xl select-none"
+        style={{
+          background: "radial-gradient(ellipse at 30% 50%, #111827 0%, #0a0f1e 60%, #060a14 100%)",
+          backgroundImage: `radial-gradient(ellipse at 30% 50%, #111827 0%, #0a0f1e 60%, #060a14 100%), radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)`,
+          backgroundSize: "100% 100%, 24px 24px",
+          cursor: dragging ? "grabbing" : "grab",
+        }}
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      >
+        <svg width="100%" height="100%" className="block">
           <defs>
-            {/* Glow filter */}
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-            <filter id="glow-strong">
-              <feGaussianBlur stdDeviation="8" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
+            <filter id="glow-gold"><feGaussianBlur stdDeviation="6" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+            <filter id="glow-blue"><feGaussianBlur stdDeviation="4" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
 
-          {/* Connection lines */}
-          {tree.branches.map((branch) =>
-            branch.nodes.map((node, idx) => {
-              if (idx === 0) return null;
-              const prev = branch.nodes[idx - 1];
-              const x1 = nx(node.column);
-              const y1 = ny(node.row) + NODE_H / 2;
-              const x2 = nx(prev.column);
-              const y2 = ny(prev.row) + NODE_H / 2;
-              const bothDone = node.status === "completed" && prev.status === "completed";
-              const oneAvail = node.status !== "locked" || prev.status !== "locked";
-              return (
-                <motion.path
-                  key={`${prev.id}-${node.id}`}
-                  d={`M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}`}
-                  fill="none"
-                  stroke={bothDone ? branch.color : oneAvail ? `${branch.color}60` : "var(--border)"}
-                  strokeWidth={bothDone ? 3 : 2}
-                  strokeDasharray={bothDone ? "none" : "6 4"}
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.6, delay: idx * 0.08 }}
-                />
-              );
-            })
-          )}
+          <g transform={`translate(${transform.x},${transform.y}) scale(${transform.scale})`}>
+            {/* Connections: start → first of each branch */}
+            {tree.branches.map(branch => {
+              const first = branch.nodes[0];
+              if (!first) return null;
+              return <line key={`s-${first.id}`}
+                x1={tree.startNode.x} y1={tree.startNode.y}
+                x2={first.x} y2={first.y}
+                stroke={first.status === "completed" ? branch.color : "#1e293b"}
+                strokeWidth={first.status === "completed" ? 2.5 : 1.5}
+                strokeDasharray={first.status !== "completed" ? "4 3" : "none"}
+                opacity={first.status === "locked" ? 0.3 : 0.8} />;
+            })}
 
-          {/* Lines from last node of each branch to goal */}
-          {tree.branches.map((branch) => {
-            const last = branch.nodes[branch.nodes.length - 1];
-            if (!last) return null;
-            const x1 = nx(last.column);
-            const y1 = ny(last.row) + NODE_H / 2;
-            const x2 = goalX;
-            const y2 = goalY + NODE_H / 2;
-            const done = last.status === "completed";
-            return (
-              <motion.path
-                key={`${last.id}-goal`}
-                d={`M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}`}
-                fill="none"
-                stroke={done ? `${branch.color}80` : "var(--border)"}
-                strokeWidth={2}
-                strokeDasharray="6 4"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              />
-            );
-          })}
+            {/* Connections within branches */}
+            {tree.branches.map(branch =>
+              branch.nodes.map((node, i) => {
+                if (i === 0) return null;
+                const prev = branch.nodes[i - 1];
+                const done = node.status === "completed" && prev.status === "completed";
+                const active = node.status !== "locked";
+                return <line key={`${prev.id}-${node.id}`}
+                  x1={prev.x} y1={prev.y} x2={node.x} y2={node.y}
+                  stroke={done ? branch.color : active ? `${branch.color}60` : "#1e293b"}
+                  strokeWidth={done ? 2.5 : 1.5}
+                  strokeDasharray={done ? "none" : "4 3"}
+                  opacity={active ? 0.8 : 0.25} />;
+              })
+            )}
 
-          {/* Nodes */}
-          {tree.branches.map((branch) =>
-            branch.nodes.map((node, idx) => (
-              <TreeNode
-                key={node.id}
-                node={node}
-                x={nx(node.column) - NODE_W / 2}
-                y={ny(node.row)}
-                color={branch.color}
-                hovered={hoveredNode === node.id}
-                onHover={setHoveredNode}
-                onClick={handleNodeClick}
-                delay={idx * 0.06}
-              />
-            ))
-          )}
+            {/* Connections: last of each branch → goal */}
+            {tree.branches.map(branch => {
+              const last = branch.nodes[branch.nodes.length - 1];
+              if (!last) return null;
+              return <line key={`${last.id}-g`}
+                x1={last.x} y1={last.y}
+                x2={tree.goalNode.x} y2={tree.goalNode.y}
+                stroke={last.status === "completed" ? `${branch.color}80` : "#1e293b"}
+                strokeWidth={1.5} strokeDasharray="4 3"
+                opacity={last.status === "completed" ? 0.6 : 0.2} />;
+            })}
 
-          {/* Goal node */}
-          <GoalNode
-            x={goalX - NODE_W / 2 - 10}
-            y={goalY}
-            title={tree.goalNode.title}
-            completed={tree.goalNode.status === "completed"}
-          />
+            {/* Start node */}
+            <NodeCircle node={tree.startNode} color="#fbbf24" hovered={false}
+              onHover={() => {}} onClick={() => {}} isSpecial />
+
+            {/* Branch nodes */}
+            {tree.branches.map(branch =>
+              branch.nodes.map(node => (
+                <NodeCircle key={node.id} node={node} color={branch.color}
+                  hovered={hovered === node.id}
+                  onHover={setHovered} onClick={handleClick} />
+              ))
+            )}
+
+            {/* Goal node */}
+            <NodeCircle node={tree.goalNode} color="#fbbf24" hovered={false}
+              onHover={() => {}} onClick={() => {}} isSpecial />
+          </g>
         </svg>
+
+        {/* Tooltip */}
+        {hovered && (() => {
+          const node = tree.allNodes.find(n => n.id === hovered);
+          if (!node) return null;
+          const sx = node.x * transform.scale + transform.x;
+          const sy = node.y * transform.scale + transform.y - 50;
+          return (
+            <div className="absolute pointer-events-none z-20 px-3 py-2 rounded-lg max-w-[200px]"
+              style={{ left: sx - 80, top: sy - 30,
+                background: "rgba(15,23,42,0.95)", border: "1px solid #334155",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+              <p className="text-[11px] font-semibold text-white truncate">{node.title}</p>
+              <p className="text-[9px] text-gray-400 mt-0.5">{node.semester} · {node.effort}</p>
+              {node.status === "locked" && (
+                <p className="text-[9px] text-gray-500 mt-1">Complete previous node first</p>
+              )}
+              {(node.status === "available" || node.status === "in_progress") && (
+                <p className="text-[9px] mt-1" style={{ color: getCategoryColor(node.category) }}>
+                  Click to verify completion
+                </p>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
-      {/* Selected node detail panel */}
-      {selectedNode && !verifyOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5"
-        >
+      {/* Detail panel */}
+      {selectedNode && !verifyOpen && selectedNode.id !== "__start__" && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-4 left-4 right-4 rounded-xl p-4 z-30"
+          style={{ background: "rgba(15,23,42,0.95)", border: "1px solid #1e293b" }}>
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">{getCategoryIcon(selectedNode.category)}</span>
-              <div>
-                <p className="text-[14px] font-semibold text-[var(--foreground)]">{selectedNode.title}</p>
-                <p className="text-[11px] text-[var(--muted)] mt-0.5">{selectedNode.semester} · {selectedNode.effort}</p>
-              </div>
+            <div>
+              <p className="text-[13px] font-semibold text-white">{selectedNode.title}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{selectedNode.semester} · {selectedNode.effort}</p>
             </div>
-            {selectedNode.status === "completed" ? (
-              <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600">
-                ✓ Completed
-              </span>
-            ) : (
-              <button
-                onClick={() => { markNodeInProgress(selectedNode.id); setVerifyOpen(true); rebuild(); }}
-                className="btn-primary h-8 px-4 text-[12px]"
-              >
-                Verify Completion
+            <div className="flex gap-2">
+              {selectedNode.status === "completed" ? (
+                <span className="text-[10px] font-semibold text-emerald-400 px-2 py-1 rounded-full bg-emerald-400/10">
+                  Completed
+                </span>
+              ) : (
+                <button onClick={() => { markNodeInProgress(selectedNode.id); setVerifyOpen(true); rebuild(); }}
+                  className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-white text-black hover:bg-gray-200 transition-colors">
+                  Verify
+                </button>
+              )}
+              <button onClick={() => setSelectedNode(null)}
+                className="text-[11px] text-gray-400 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
+                Close
               </button>
-            )}
+            </div>
           </div>
-          <p className="mt-3 text-[12.5px] leading-relaxed text-[var(--muted-foreground)]">
-            {selectedNode.why}
-          </p>
+          <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">{selectedNode.why}</p>
         </motion.div>
       )}
 
-      {/* Verify Chat Modal */}
-      <VerifyChatModal
-        node={selectedNode}
-        open={verifyOpen}
-        onClose={() => { setVerifyOpen(false); }}
-        onVerified={handleVerified}
-      />
+      <VerifyChatModal node={selectedNode} open={verifyOpen}
+        onClose={() => setVerifyOpen(false)} onVerified={handleVerified} />
     </div>
   );
 }
 
-/* ─── Tree Node (SVG foreignObject) ───────────── */
+/* ─── Circular Node ──────────────────────────────── */
 
-function TreeNode({
-  node, x, y, color, hovered, onHover, onClick, delay,
-}: {
-  node: SkillNode;
-  x: number; y: number;
-  color: string;
-  hovered: boolean;
-  onHover: (id: string | null) => void;
-  onClick: (n: SkillNode) => void;
-  delay: number;
+function NodeCircle({ node, color, hovered, onHover, onClick, isSpecial }: {
+  node: SkillNode; color: string; hovered: boolean;
+  onHover: (id: string | null) => void; onClick: (n: SkillNode) => void;
+  isSpecial?: boolean;
 }) {
-  const isLocked = node.status === "locked";
-  const isDone = node.status === "completed";
-  const isAvail = node.status === "available";
-  const isInProg = node.status === "in_progress";
+  const done = node.status === "completed";
+  const avail = node.status === "available";
+  const ip = node.status === "in_progress";
+  const locked = node.status === "locked";
+  const r = isSpecial ? 30 : R;
+
+  const fillColor = done ? `${color}30` : avail || ip ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.02)";
+  const strokeColor = done ? color : avail ? `${color}cc` : ip ? color : "#1e293b";
+  const strokeW = done ? 3 : avail || ip ? 2.5 : 1.5;
+  const op = locked ? 0.35 : 1;
 
   return (
-    <motion.g
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-    >
-      <foreignObject x={x} y={y} width={NODE_W} height={NODE_H}>
-        <div
-          onClick={() => onClick(node)}
-          onMouseEnter={() => onHover(node.id)}
-          onMouseLeave={() => onHover(null)}
-          className="h-full w-full rounded-xl border-2 px-3 py-2 flex flex-col justify-center transition-all duration-200"
-          style={{
-            cursor: isLocked ? "not-allowed" : "pointer",
-            borderColor: isDone ? color : isAvail || isInProg ? `${color}80` : "var(--border)",
-            background: isDone
-              ? `${color}15`
-              : isAvail
-              ? "var(--surface)"
-              : isInProg
-              ? `${color}08`
-              : "var(--background-secondary)",
-            opacity: isLocked ? 0.45 : 1,
-            transform: hovered && !isLocked ? "scale(1.06)" : "scale(1)",
-            boxShadow: isDone
-              ? `0 0 20px ${color}25`
-              : hovered && !isLocked
-              ? `0 4px 20px ${color}20`
-              : "none",
-          }}
-        >
-          <div className="flex items-center gap-1.5">
-            {isDone ? (
-              <Check size={12} style={{ color }} strokeWidth={3} />
-            ) : isLocked ? (
-              <Lock size={11} className="text-[var(--muted)]" />
-            ) : isInProg ? (
-              <Play size={11} style={{ color }} />
-            ) : (
-              <span className="text-[11px]">{getCategoryIcon(node.category)}</span>
-            )}
-            <span
-              className="text-[10.5px] font-semibold truncate leading-tight"
-              style={{ color: isDone || isAvail || isInProg ? "var(--foreground)" : "var(--muted)" }}
-            >
-              {node.title}
-            </span>
-          </div>
-          <p className="text-[9px] mt-0.5 truncate"
-            style={{ color: isDone ? color : "var(--muted)" }}>
-            {isDone ? "Verified ✓" : isLocked ? "Complete previous first" : node.effort}
-          </p>
-        </div>
-      </foreignObject>
-    </motion.g>
-  );
-}
+    <g data-node="true" opacity={op}
+      onMouseEnter={() => onHover(node.id)} onMouseLeave={() => onHover(null)}
+      onClick={() => onClick(node)}
+      style={{ cursor: locked ? "not-allowed" : isSpecial ? "default" : "pointer" }}>
 
-/* ─── Goal Node ──────────────────────────────────── */
+      {/* Outer glow for completed/available */}
+      {(done || avail || ip) && (
+        <circle cx={node.x} cy={node.y} r={r + 8}
+          fill="none" stroke={color} strokeWidth={1}
+          opacity={done ? 0.4 : 0.2}
+          filter={done ? "url(#glow-gold)" : "url(#glow-blue)"} />
+      )}
 
-function GoalNode({ x, y, title, completed }: { x: number; y: number; title: string; completed: boolean }) {
-  return (
-    <motion.g
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, delay: 0.8 }}
-    >
-      <foreignObject x={x} y={y} width={NODE_W + 20} height={NODE_H + 10}>
-        <div className="h-full w-full rounded-2xl border-2 px-4 py-3 flex items-center gap-3"
-          style={{
-            borderColor: completed ? "#f59e0b" : "var(--border)",
-            background: completed
-              ? "linear-gradient(135deg, #fef3c7, #fde68a)"
-              : "linear-gradient(135deg, var(--surface), var(--background-secondary))",
-            boxShadow: completed ? "0 0 30px rgba(245,158,11,0.3)" : "var(--shadow-card)",
-          }}>
-          <Crown size={20} className={completed ? "text-amber-600" : "text-[var(--muted)]"} />
-          <div>
-            <p className="text-[12px] font-bold" style={{ color: completed ? "#92400e" : "var(--foreground)" }}>
-              {title}
-            </p>
-            <p className="text-[9px]" style={{ color: completed ? "#b45309" : "var(--muted)" }}>
-              {completed ? "🏆 Goal reached!" : "Complete all branches"}
-            </p>
-          </div>
-        </div>
-      </foreignObject>
-    </motion.g>
+      {/* Pulse ring for available */}
+      {(avail || ip) && (
+        <circle cx={node.x} cy={node.y} r={r + 4}
+          fill="none" stroke={color} strokeWidth={1.5} opacity={0.5}>
+          <animate attributeName="r" from={String(r + 2)} to={String(r + 14)} dur="2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite" />
+        </circle>
+      )}
+
+      {/* Main circle */}
+      <circle cx={node.x} cy={node.y} r={r}
+        fill={fillColor} stroke={strokeColor} strokeWidth={strokeW}
+        className="transition-all duration-200" />
+
+      {/* Hover highlight */}
+      {hovered && !locked && (
+        <circle cx={node.x} cy={node.y} r={r + 2}
+          fill="none" stroke="white" strokeWidth={1} opacity={0.6} />
+      )}
+
+      {/* Icon */}
+      {isSpecial && node.id === "__goal__" ? (
+        <foreignObject x={node.x - 10} y={node.y - 10} width={20} height={20}>
+          <Trophy size={16} className="text-amber-400 mx-auto" />
+        </foreignObject>
+      ) : isSpecial ? (
+        <circle cx={node.x} cy={node.y} r={6} fill={color} opacity={0.8} />
+      ) : done ? (
+        <foreignObject x={node.x - 7} y={node.y - 7} width={14} height={14}>
+          <Check size={12} style={{ color }} strokeWidth={3} className="mx-auto" />
+        </foreignObject>
+      ) : locked ? (
+        <foreignObject x={node.x - 6} y={node.y - 6} width={12} height={12}>
+          <Lock size={10} className="text-gray-600 mx-auto" />
+        </foreignObject>
+      ) : ip ? (
+        <foreignObject x={node.x - 6} y={node.y - 6} width={12} height={12}>
+          <Play size={10} style={{ color }} className="mx-auto" />
+        </foreignObject>
+      ) : (
+        <circle cx={node.x} cy={node.y} r={4}
+          fill={avail ? color : "#475569"} opacity={0.8} />
+      )}
+    </g>
   );
 }

@@ -158,93 +158,87 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-5xl">
-        {tab === "overview" && (
-          <div className="animate-fade-up">
-            <header className="pb-8 pt-2">
-              <h1 className="text-[2rem] font-semibold tracking-tight">
-                {greeting()}, {firstName}.
-              </h1>
-            </header>
-
-            <div className="grid gap-5 lg:grid-cols-5">
-              <div className="lg:col-span-3">
-                <Arc profile={data.profile} />
-              </div>
-              <div className="lg:col-span-2">
-                <TrajectoryChart profile={data.profile} />
-              </div>
+      {tab === "roadmap" ? (
+        <div className="w-full animate-fade-up px-2 sm:px-4">
+          <div className="flex flex-wrap items-end justify-between gap-4 pb-4 pt-2 max-w-5xl mx-auto">
+            <div>
+              <h1 className="text-[1.5rem] font-semibold tracking-tight">Skill Tree</h1>
+              <p className="mt-1 text-[12px] text-[var(--muted)]">
+                {semesters.length > 0
+                  ? "Navigate branches. Click available nodes to verify completion."
+                  : "Your career skill tree, built from your roadmap."}
+              </p>
             </div>
-
-            <div className="mt-8">
-              <SemesterMission
-                profile={data.profile}
-                doneTick={doneTick}
-                onOpenPlan={() => router.push("/dashboard?tab=roadmap")}
-              />
-            </div>
-
-            <div className="mt-10">
-              <WeeklyMoves
-                profile={data.profile}
-                onChange={() => {
-                  setDoneTick((t) => t + 1);
-                  bumpStreak();
-                  window.dispatchEvent(new Event("bluprint:streak"));
-                }}
-              />
-            </div>
-
-            <section className="mt-10">
-              <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wider text-[var(--muted)]">
-                Peers on the same path
-              </h2>
-              <CampusNetworkCard universityName={data.profile?.university} />
-            </section>
+            <button
+              type="button"
+              onClick={() => router.push("/onboarding")}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+            >
+              <RefreshCcw size={12} /> Regenerate
+            </button>
           </div>
-        )}
 
-        {tab === "roadmap" && (
-          <div className="animate-fade-up">
-            <header className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-2">
-              <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight">Skill Tree</h1>
-                <p className="mt-1.5 text-sm text-[var(--muted)]">
-                  {semesters.length > 0
-                    ? "Navigate your branches. Unlock skills by proving completion to the AI."
-                    : "Your career skill tree, built from your roadmap."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => router.push("/onboarding")}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
-              >
-                <RefreshCcw size={12} /> Regenerate
+          {semesters.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center max-w-5xl mx-auto">
+              <p className="text-sm font-medium text-[var(--foreground)]">No skill tree yet.</p>
+              <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap from onboarding to build your tree.</p>
+              <button type="button" onClick={() => router.push("/onboarding")}
+                className="mt-5 btn-primary h-10 px-6 text-[13px]">
+                Build my tree
               </button>
-            </header>
+            </div>
+          ) : (
+            <SkillTreeView semesters={semesters} dreamRole={data?.profile?.dreamRole} />
+          )}
+        </div>
+      ) : (
+        <div className="mx-auto w-full max-w-5xl">
+          {tab === "overview" && (
+            <div className="animate-fade-up">
+              <header className="pb-8 pt-2">
+                <h1 className="text-[2rem] font-semibold tracking-tight">
+                  {greeting()}, {firstName}.
+                </h1>
+              </header>
 
-            {semesters.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center">
-                <p className="text-sm font-medium text-[var(--foreground)]">No skill tree yet.</p>
-                <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap from onboarding to build your tree.</p>
-                <button
-                  type="button"
-                  onClick={() => router.push("/onboarding")}
-                  className="mt-5 btn-primary h-10 px-6 text-[13px]"
-                >
-                  Build my tree
-                </button>
+              <div className="grid gap-5 lg:grid-cols-5">
+                <div className="lg:col-span-3">
+                  <Arc profile={data.profile} />
+                </div>
+                <div className="lg:col-span-2">
+                  <TrajectoryChart profile={data.profile} />
+                </div>
               </div>
-            ) : (
-              <SkillTreeView
-                semesters={semesters}
-                dreamRole={data?.profile?.dreamRole}
-              />
-            )}
-          </div>
-        )}
-      </div>
+
+              <div className="mt-8">
+                <SemesterMission
+                  profile={data.profile}
+                  doneTick={doneTick}
+                  onOpenPlan={() => router.push("/dashboard?tab=roadmap")}
+                />
+              </div>
+
+              <div className="mt-10">
+                <WeeklyMoves
+                  profile={data.profile}
+                  onChange={() => {
+                    setDoneTick((t) => t + 1);
+                    bumpStreak();
+                    window.dispatchEvent(new Event("bluprint:streak"));
+                  }}
+                />
+              </div>
+
+              <section className="mt-10">
+                <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                  Peers on the same path
+                </h2>
+                <CampusNetworkCard universityName={data.profile?.university} />
+              </section>
+            </div>
+          )}
+        </div>
+      )}
     </AppShell>
   );
 }
