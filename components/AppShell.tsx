@@ -2,15 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Bot, Calendar, ClipboardList, FileText, LayoutDashboard, Map } from "lucide-react";
+import { LayoutDashboard, Map, Settings } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard",               label: "Overview",   icon: LayoutDashboard, tab: "overview" },
-  { href: "/planner",                 label: "Planner",    icon: ClipboardList },
   { href: "/dashboard?tab=roadmap",   label: "Roadmap",    icon: Map,       tab: "roadmap"   },
-  { href: "/dashboard?tab=month",     label: "This Month", icon: Calendar,  tab: "month"     },
-  { href: "/cv-analyzer",             label: "CV",         icon: FileText },
-  { href: "/dashboard?tab=assistant", label: "AI",         icon: Bot,       tab: "assistant" },
+  { href: "/settings",                label: "Settings",   icon: Settings },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -35,18 +32,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-xl sm:hidden">
-        <div className="grid grid-cols-6 gap-0.5 px-2 py-2">
+        <div className="grid grid-cols-3 gap-1 px-3 py-2">
           {navItems.map((item) => {
             const active = isActive(item);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 rounded-lg py-1.5 text-[9px] font-medium transition-colors duration-100 ${
-                  active ? "text-[var(--accent)]" : "text-[var(--muted)]"
+                className={`flex flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium transition-colors duration-100 ${
+                  active ? "text-[var(--accent)] bg-[var(--accent-light)]" : "text-[var(--muted)]"
                 }`}
               >
-                <item.icon size={17} />
+                <item.icon size={20} />
                 {item.label}
               </Link>
             );

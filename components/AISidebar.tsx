@@ -208,6 +208,18 @@ export default function AISidebar() {
     if (open && textareaRef.current) textareaRef.current.focus();
   }, [open]);
 
+  // Listen for global "open the AI" event from dashboard cards
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ message?: string }>).detail;
+      setOpen(true);
+      setMinimized(false);
+      if (detail?.message) setInput(detail.message);
+    };
+    window.addEventListener("bluprint:openAI", handler);
+    return () => window.removeEventListener("bluprint:openAI", handler);
+  }, []);
+
   const handleAction = (action: AIAction, msgIndex: number, actionIndex: number) => {
     const key = `${msgIndex}_${actionIndex}`;
     if (executedActions.has(key)) return;
@@ -264,8 +276,6 @@ export default function AISidebar() {
 
   const suggestions = SUGGESTIONS[pageKey] || SUGGESTIONS.default;
 
-  // Don't show on the AI tab (it has its own chat)
-  if (pathname === "/dashboard" && tab === "assistant") return null;
   if (pathname === "/" || pathname === "/sign-in" || pathname === "/sign-up" || pathname === "/pricing" || pathname === "/onboarding") return null;
 
   return (

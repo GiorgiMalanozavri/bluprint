@@ -3,12 +3,17 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon, ThumbsUp, X as XIcon, Star, BookOpen, Flame, Target, Clock, TrendingUp, AlertCircle, Zap, MessageSquare, GraduationCap, School, ExternalLink, Users } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowRight, Check, RefreshCcw, ClipboardList, BookOpen, Flame, Target,
+  Zap, MessageSquare, GraduationCap, School, ExternalLink, Users,
+  ChevronRight, Calendar, Briefcase,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import CampusNetworkCard from "@/components/CampusNetworkCard";
 import type { MonthlyTask } from "@/components/PlannerBoard";
 import { userStorage, setCurrentUserId } from "@/lib/user-storage";
+import { bumpStreak } from "@/lib/streak";
 
 type Semester = {
   semester: string;
@@ -34,10 +39,6 @@ export default function DashboardPage() {
   const [data, setData] = useState<BootstrapData | null>(null);
   const [completed, setCompleted] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [chatMessage, setChatMessage] = useState("");
-  const [threadId, setThreadId] = useState("");
-  const [chatPending, setChatPending] = useState(false);
-  const [taskPrefs, setTaskPrefs] = useState<{ interested: string[]; dismissed: string[] }>({ interested: [], dismissed: [] });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,7 +49,6 @@ export default function DashboardPage() {
         response = await fetch("/api/bootstrap");
         result = await response.json();
       } catch {
-        // Network error — try localStorage fallback
         const localProfile = userStorage.getItem("bluprint_profile_review");
         if (localProfile) {
           result = { profile: JSON.parse(localProfile), roadmap: null, chatThreads: [], user: { name: null, email: null } };
@@ -67,14 +67,12 @@ export default function DashboardPage() {
 
       setCurrentUserId(result.user?.id || "");
 
-      // If no profile exists anywhere, redirect to onboarding
       const localProfile = userStorage.getItem("bluprint_profile_review");
       if (!result.profile && !localProfile) {
         router.push("/onboarding");
         return;
       }
 
-      // If API returned profile/roadmap from DB, sync to localStorage for other pages
       if (result.profile) {
         userStorage.setItem("bluprint_profile_review", JSON.stringify(result.profile));
       }
@@ -85,15 +83,10 @@ export default function DashboardPage() {
         }
       }
 
-      // Fallback to userStorage if API returns no data (Vercel has no DB)
       if (!result.roadmap && !result.profile) {
-        const localProfile = userStorage.getItem("bluprint_profile_review");
-        const localRoadmap = userStorage.getItem("bluprint_ai_roadmap");
+        const lp = userStorage.getItem("bluprint_profile_review");
         const localFullRoadmap = userStorage.getItem("bluprint_full_roadmap");
-
-        if (localProfile) {
-          result.profile = JSON.parse(localProfile);
-        }
+        if (lp) result.profile = JSON.parse(lp);
         if (localFullRoadmap) {
           const full = JSON.parse(localFullRoadmap);
           result.roadmap = {
@@ -107,67 +100,24 @@ export default function DashboardPage() {
               summary: full.nudge || "",
             },
           };
-        } else if (localRoadmap) {
-          result.roadmap = {
-            semesters: JSON.parse(localRoadmap),
-            monthlyTasks: [],
-            cvAnalysis: null,
-          };
         }
       }
 
-      // Override with latest CV analysis from localStorage (if user ran analysis)
       const localCvAnalysis = userStorage.getItem("bluprint_cv_analysis");
       if (localCvAnalysis) {
         const analysis = JSON.parse(localCvAnalysis);
-        if (result.roadmap) {
-          result.roadmap.cvAnalysis = analysis;
-        } else {
-          result.roadmap = { semesters: [], monthlyTasks: [], cvAnalysis: analysis };
-        }
-      }
-
-      // Load coursework items due soon as dashboard tasks
-      const localCoursework = userStorage.getItem("bluprint_coursework_v1");
-      if (localCoursework) {
-        const courses = JSON.parse(localCoursework);
-        const now = new Date();
-        const threeDays = new Date(now.getTime() + 3 * 86400000);
-        const dueSoon: any[] = [];
-        courses.forEach((c: any) => {
-          (c.items || []).forEach((item: any) => {
-            if (item.done) return;
-            if (!item.dueDate) return;
-            const due = new Date(item.dueDate);
-            if (due <= threeDays) {
-              dueSoon.push({
-                id: `cw_${item.id}`,
-                title: `${c.name}: ${item.title}`,
-                category: "COURSEWORK",
-                effort: item.type === "exam" ? "Study session" : "1-2 hours",
-                why: `Due ${due.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-                _cwCourseId: c.id,
-                _cwItemId: item.id,
-              });
-            }
-          });
-        });
-        if (result.roadmap && dueSoon.length > 0) {
-          result.roadmap.monthlyTasks = [...dueSoon, ...(result.roadmap.monthlyTasks || [])];
-        }
-      }
-
-      // Load task preferences
-      const localPrefs = userStorage.getItem("bluprint_task_preferences");
-      if (localPrefs) {
-        setTaskPrefs(JSON.parse(localPrefs));
+        if (result.roadmap) result.roadmap.cvAnalysis = analysis;
+        else result.roadmap = { semesters: [], monthlyTasks: [], cvAnalysis: analysis };
       }
 
       setData(result);
-      if (result.chatThreads?.[0]?.id) setThreadId(result.chatThreads[0].id);
-      const saved = userStorage.getItem("bluprint_completed_tasks") || userStorage.getItem("foundry_completed_tasks");
+      const saved = userStorage.getItem("bluprint_completed_tasks");
       if (saved) setCompleted(JSON.parse(saved));
       setLoading(false);
+
+      // Bump streak: visiting today counts toward the streak
+      bumpStreak();
+      window.dispatchEvent(new Event("bluprint:streak"));
     };
     load();
   }, [router]);
@@ -175,109 +125,45 @@ export default function DashboardPage() {
   const tab = searchParams.get("tab") || "overview";
   const pathway = useMemo(() => buildPathwayContent(data?.profile), [data?.profile]);
   const roadmap = data?.roadmap;
-  const monthlyTasks = useMemo(() => {
-    const all = roadmap?.monthlyTasks || [];
-    return all.filter((t: any) => !taskPrefs.dismissed.includes(t.id));
-  }, [roadmap, taskPrefs]);
+  const monthlyTasks = useMemo(() => roadmap?.monthlyTasks || [], [roadmap]);
   const semesters = useMemo(() => roadmap?.semesters || [], [roadmap]);
-  const cvAnalysis = data?.roadmap?.cvAnalysis || data?.cvUpload?.analysis || null;
-  const completedCount = useMemo(() => monthlyTasks.filter((task) => completed.includes(task.id)).length, [completed, monthlyTasks]);
+  const weeklyTask = useMemo(() => monthlyTasks.find((t: any) => !completed.includes(t.id)) ?? null, [monthlyTasks, completed]);
 
   const toggleTask = (taskId: string) => {
-    // If it's a coursework task, mark it done in coursework localStorage too
-    if (taskId.startsWith("cw_")) {
-      const localCw = userStorage.getItem("bluprint_coursework_v1");
-      if (localCw) {
-        const courses = JSON.parse(localCw);
-        const task = monthlyTasks.find((t: any) => t.id === taskId) as any;
-        if (task?._cwItemId) {
-          courses.forEach((c: any) => {
-            c.items?.forEach((item: any) => {
-              if (item.id === task._cwItemId) item.done = !item.done;
-            });
-          });
-          userStorage.setItem("bluprint_coursework_v1", JSON.stringify(courses));
-        }
-      }
-    }
-    const next = completed.includes(taskId) ? completed.filter((id) => id !== taskId) : [...completed, taskId];
+    const next = completed.includes(taskId)
+      ? completed.filter((id) => id !== taskId)
+      : [...completed, taskId];
     setCompleted(next);
     userStorage.setItem("bluprint_completed_tasks", JSON.stringify(next));
+    // Completing a task also counts as activity for the streak
+    if (!completed.includes(taskId)) {
+      bumpStreak();
+      window.dispatchEvent(new Event("bluprint:streak"));
+    }
   };
 
-  const dismissTask = (taskId: string) => {
-    const next = { ...taskPrefs, dismissed: [...taskPrefs.dismissed, taskId] };
-    setTaskPrefs(next);
-    userStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
-  };
-
-  const toggleInterest = (taskId: string) => {
-    const isInterested = taskPrefs.interested.includes(taskId);
-    const next = {
-      ...taskPrefs,
-      interested: isInterested ? taskPrefs.interested.filter(id => id !== taskId) : [...taskPrefs.interested, taskId],
-    };
-    setTaskPrefs(next);
-    userStorage.setItem("bluprint_task_preferences", JSON.stringify(next));
-  };
-
-  const sendChat = async () => {
-    if (!chatMessage.trim()) return;
-    setChatPending(true);
-    const response = await fetch("/api/assistant-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ threadId, message: chatMessage }),
-    });
-    const result = await response.json();
-    setChatPending(false);
-    if (!response.ok) return;
-
-    setThreadId(result.threadId);
-    setData((current) =>
-      current
-        ? {
-            ...current,
-            chatThreads: [
-              {
-                id: result.threadId,
-                title: current.chatThreads[0]?.title || chatMessage.split(" ").slice(0, 6).join(" "),
-                messages: [...(current.chatThreads.find((item) => item.id === result.threadId)?.messages || []), { role: "user", content: chatMessage }, { role: "assistant", content: result.reply }],
-              },
-              ...current.chatThreads.filter((item) => item.id !== result.threadId),
-            ],
-          }
-        : current
-    );
-    setChatMessage("");
+  const handleCopy = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+      bumpStreak();
+      window.dispatchEvent(new Event("bluprint:streak"));
+    } catch {
+      /* ignore */
+    }
   };
 
   if (loading || !data) {
     return (
       <AppShell>
-        <div className="mx-auto w-full max-w-6xl animate-pulse pt-2">
+        <div className="mx-auto w-full max-w-5xl animate-pulse pt-2">
           <div className="h-8 w-64 rounded-lg bg-[var(--background-secondary)] mb-3" />
           <div className="h-4 max-w-xl rounded-lg bg-[var(--background-secondary)] mb-8" />
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-            <div className="space-y-4 md:col-span-7 xl:col-span-8">
-              <div className="h-24 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div className="h-40 rounded-2xl border border-[var(--border)] bg-[var(--surface)] md:col-span-2" />
-                <div className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
-                <div className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
-              </div>
-            </div>
-            <div className="space-y-4 md:col-span-5 xl:col-span-4">
-              <div className="h-36 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="h-28 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
-                <div className="h-28 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="h-24 rounded-2xl border border-[var(--border)] bg-[var(--surface)] mb-8" />
+          <div className="space-y-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-36 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+              <div key={i} className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
             ))}
           </div>
         </div>
@@ -285,572 +171,195 @@ export default function DashboardPage() {
     );
   }
 
+  const firstName = (data.profile?.name || data.user.name || "Student").split(" ")[0];
+
   return (
     <AppShell>
-      <div className="mx-auto w-full">
+      <div className="mx-auto w-full max-w-5xl">
         {tab === "overview" && (
-          <div className="w-full animate-fade-up">
-            <header className="grid gap-4 pb-6 pt-2 sm:grid-cols-[1fr_auto] sm:items-end lg:pb-8">
-              <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight">
-                  {(() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })()}, {(data.profile?.name || data.user.name || "Student").split(" ")[0]}.
-                </h1>
-                <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
-                  {cvAnalysis?.summary || "Your dream outcome, reverse-engineered to what matters this week."}
-                </p>
-              </div>
-              <div className="hidden sm:flex flex-wrap items-center justify-end gap-2 text-[11px] font-medium text-[var(--muted)]">
-                <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5">
-                  {completedCount}/{monthlyTasks.length || 0} tasks
-                </span>
-                <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5">
-                  {semesters.length} semesters
-                </span>
-              </div>
+          <div className="animate-fade-up">
+            {/* Greeting */}
+            <header className="pb-6 pt-2">
+              <h1 className="text-[2rem] font-semibold tracking-tight">
+                {greeting()}, {firstName}.
+              </h1>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Three high-leverage moves today. Five minutes.
+              </p>
             </header>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:items-start md:gap-8 lg:gap-10">
-              {/* Main column: pathway + daily feed */}
-              <div className="min-w-0 space-y-8 md:col-span-7 xl:col-span-8">
+            {/* The Pathway — horizontal timeline */}
+            <PathwayTimeline profile={data.profile} />
+
+            {/* Daily Feed — 3 cards */}
+            <section className="mt-10">
+              <div className="mb-4 flex items-baseline gap-2.5">
+                <Zap size={16} className="text-[var(--accent)]" />
+                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Today</h2>
+                <span className="text-[11px] font-medium text-[var(--muted)]">3 moves · ~5 min</span>
+              </div>
+
+              <div className="space-y-3">
+                {/* Card 1: Warm intro */}
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-sm shadow-blue-500/15">
-                      <Target size={18} />
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                      <MessageSquare size={14} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold text-[var(--foreground)]">The Pathway</p>
-                      <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--muted)]">
-                        You didn&apos;t just enter your major — you named where you want to land. We work backward from graduation to{" "}
-                        <span className="font-medium text-[var(--foreground)]">this Tuesday</span>: daily micro-wins, weekly portfolio moves, and monthly course corrections so nothing slips.
-                      </p>
-                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Warm intro</span>
                   </div>
-                </div>
-
-                <section>
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <Zap size={16} className="text-[var(--accent)]" />
-                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Daily Feed</h2>
-                    <span className="rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">~5 min</span>
+                  <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.warmIntro.body}</p>
+                  <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 font-mono text-[11.5px] leading-relaxed text-[var(--muted-foreground)]">
+                    {pathway.warmIntro.dmDraft}
                   </div>
-                  <p className="mb-5 text-[12px] text-[var(--muted)]">High-leverage moves — not busywork.</p>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <PathwayCard
-                      className="md:col-span-2"
-                      label="Warm intro of the day"
-                      icon={<MessageSquare size={16} className="text-violet-400" />}
-                      accent="border-violet-500/15 bg-violet-500/[0.04]"
-                    >
-                      <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.warmIntro.body}</p>
-                      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[var(--muted-foreground)]">
-                        {pathway.warmIntro.dmDraft}
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(pathway.warmIntro.dmDraft);
-                              setCopiedId("warm");
-                              setTimeout(() => setCopiedId(null), 2000);
-                            } catch { /* ignore */ }
-                          }}
-                          className="rounded-lg bg-[var(--foreground)] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
-                        >
-                          {copiedId === "warm" ? "Copied" : "Copy DM"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { setChatMessage("Polish my LinkedIn DM for a coffee chat with an alum"); router.push("/dashboard?tab=assistant"); }}
-                          className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface)]"
-                        >
-                          Refine with AI
-                        </button>
-                      </div>
-                    </PathwayCard>
-
-                    <PathwayCard
-                      label="Micro-skill drop"
-                      icon={<Flame size={16} className="text-orange-400" />}
-                      accent="border-orange-500/15 bg-orange-500/[0.04]"
-                    >
-                      <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.microSkill.body}</p>
-                      <button
-                        type="button"
-                        onClick={() => window.open(pathway.microSkill.href, "_blank", "noopener,noreferrer")}
-                        className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                      >
-                        {pathway.microSkill.cta}
-                        <ExternalLink size={12} />
-                      </button>
-                    </PathwayCard>
-
-                    <PathwayCard
-                      label="Campus serendipity"
-                      icon={<School size={16} className="text-emerald-400" />}
-                      accent="border-emerald-500/15 bg-emerald-500/[0.04]"
-                    >
-                      <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.campus.body}</p>
-                      <button
-                        type="button"
-                        onClick={() => router.push("/planner")}
-                        className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                      >
-                        Block 30 min in planner →
-                      </button>
-                    </PathwayCard>
-                  </div>
-                </section>
-              </div>
-
-              {/* Sidebar: single panel, clear sections */}
-              <aside className="min-w-0 md:col-span-5 xl:col-span-4 md:sticky md:top-24 md:self-start">
-                <div className="flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
-                  <div className="border-b border-[var(--border)] p-5">
-                    <div className="mb-1 flex items-center gap-2">
-                      <Users size={16} className="text-[var(--accent)]" />
-                      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Campus Network</h2>
-                    </div>
-                    <p className="mb-4 text-[12px] leading-snug text-[var(--muted)]">Peers on the same trajectory.</p>
-                    <CampusNetworkCard universityName={data.profile?.university} compact />
-                  </div>
-
-                  <div className="border-b border-[var(--border)] p-5">
-                    <div className="mb-1 flex items-center gap-2">
-                      <Calendar size={16} className="text-[var(--accent)]" />
-                      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Weekly sync</h2>
-                    </div>
-                    <p className="mb-4 text-[12px] text-[var(--muted)]">Portfolio and internship runway.</p>
-                    <div className="flex flex-col gap-3">
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Friday portfolio</p>
-                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.weeklyPortfolio}</p>
-                        <button
-                          type="button"
-                          onClick={() => router.push("/cv-analyzer")}
-                          className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                        >
-                          Open CV analyzer
-                        </button>
-                      </div>
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Internship radar</p>
-                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.internshipRadar}</p>
-                        <button
-                          type="button"
-                          onClick={() => { setChatMessage("Help me add ATS keywords to my resume for summer internships"); router.push("/dashboard?tab=assistant"); }}
-                          className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                        >
-                          Resume pass with AI →
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-5">
-                    <div className="mb-1 flex items-center gap-2">
-                      <GraduationCap size={16} className="text-[var(--accent)]" />
-                      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Monthly audit</h2>
-                    </div>
-                    <p className="mb-4 text-[12px] text-[var(--muted)]">Credits and sanity checks.</p>
-                    <div className="flex flex-col gap-3">
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Course correction</p>
-                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.courseCorrection}</p>
-                      </div>
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Burnout check</p>
-                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.burnoutCheck}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </aside>
-            </div>
-
-            {/* Bottom band */}
-            <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3 md:items-stretch">
-              <div className="flex min-h-[220px] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
-                <p className="mb-4 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Shortcuts</p>
-                <div className="grid flex-1 grid-cols-3 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => router.push("/planner")}
-                    className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-3 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-light)]/40"
-                  >
-                    <ClipboardList size={20} className="text-[var(--accent)]" />
-                    <span className="text-[12px] font-medium text-[var(--foreground)]">Planner</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/cv-analyzer")}
-                    className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-3 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-light)]/40"
-                  >
-                    <div className="relative h-6 w-6">
-                      <svg className="h-full w-full" viewBox="0 0 100 100">
-                        <circle className="text-[var(--background-secondary)]" strokeWidth="12" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                        <circle className="text-[var(--accent)]" strokeWidth="12" strokeDasharray={251} strokeDashoffset={251 - (251 * (cvAnalysis?.score || 0)) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                      </svg>
-                    </div>
-                    <span className="text-[12px] font-medium text-[var(--foreground)]">CV {cvAnalysis?.score ?? 0}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard?tab=assistant")}
-                    className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-3 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-light)]/40"
-                  >
-                    <Sparkles size={20} className="text-[var(--accent)]" />
-                    <span className="text-[12px] font-medium text-[var(--foreground)]">AI</span>
-                  </button>
-                </div>
-              </div>
-
-              <section className="flex min-h-[220px] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
-                <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-[var(--border)] pb-3">
-                  <h2 className="text-[14px] font-semibold text-[var(--foreground)]">This Month</h2>
-                  <span className="text-[11px] font-medium text-[var(--muted)]">{completedCount}/{monthlyTasks.length} done</span>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard?tab=month")}
-                    className="ml-auto text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                  >
-                    View all
-                  </button>
-                </div>
-                <div className="min-h-0 flex-1 space-y-1">
-                  {monthlyTasks.slice(0, 4).map((task) => {
-                    const done = completed.includes(task.id);
-                    return (
-                      <div
-                        key={task.id}
-                        className={`flex items-start gap-3 rounded-xl px-1 py-2 transition-colors ${
-                          done ? "opacity-50" : "hover:bg-[var(--surface-secondary)]"
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => toggleTask(task.id)}
-                          className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all ${
-                            done ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--border-hover)] bg-transparent hover:border-[var(--accent)]"
-                          }`}
-                        >
-                          {done && <Check size={11} strokeWidth={3} />}
-                        </button>
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-[13px] font-medium leading-snug ${done ? "text-[var(--muted)] line-through" : "text-[var(--foreground)]"}`}>
-                            {task.title}
-                          </p>
-                          <div className="mt-1"><CategoryPill category={task.category} /></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="flex min-h-[220px] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
-                <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-[var(--border)] pb-3">
-                  <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Timeline</h2>
-                  <span className="text-[11px] font-medium text-[var(--muted)]">{semesters.length} semesters</span>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard?tab=roadmap")}
-                    className="ml-auto text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                  >
-                    Full roadmap
-                  </button>
-                </div>
-                <div className="min-h-0 flex-1 space-y-0.5">
-                  {semesters.slice(0, 6).map((s) => (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <CopyButton
+                      onClick={() => handleCopy("warm", pathway.warmIntro.dmDraft)}
+                      copied={copiedId === "warm"}
+                    />
                     <button
-                      key={s.semester}
                       type="button"
-                      onClick={() => router.push("/dashboard?tab=roadmap")}
-                      className="group flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-[var(--surface-secondary)]"
+                      onClick={() => window.dispatchEvent(new CustomEvent("bluprint:openAI", { detail: { message: "Refine this LinkedIn DM to be a touch less formal" } }))}
+                      className="rounded-lg border border-[var(--border)] px-3.5 py-2 text-[12px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--background-secondary)]"
                     >
-                      <div
-                        className={`h-2 w-2 shrink-0 rounded-full ${
-                          s.status === "current" ? "bg-[var(--accent)]" : s.status === "completed" ? "bg-[var(--border-hover)]" : "bg-[var(--border)]"
-                        }`}
-                      />
-                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--foreground)]">{s.semester}</p>
-                      {s.status === "current" ? (
-                        <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">Now</span>
-                      ) : (
-                        <span className="shrink-0 text-[10px] font-medium capitalize text-[var(--muted)]">{s.status}</span>
-                      )}
-                      <ArrowRight size={14} className="shrink-0 text-[var(--muted)] opacity-0 transition-opacity group-hover:opacity-100" />
+                      Refine with AI
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </section>
-            </div>
+
+                {/* Card 2: Micro-skill drop */}
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500">
+                      <Flame size={14} />
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Micro-skill drop</span>
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.microSkill.body}</p>
+                  <div className="mt-4">
+                    <a
+                      href={pathway.microSkill.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => { bumpStreak(); window.dispatchEvent(new Event("bluprint:streak")); }}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--foreground)] px-3.5 py-2 text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+                    >
+                      {pathway.microSkill.cta}
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Card 3: Campus serendipity */}
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                      <School size={14} />
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">On campus</span>
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.campus.body}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Campus Network widget */}
+            <section className="mt-8">
+              <div className="mb-4 flex items-baseline gap-2.5">
+                <Users size={16} className="text-[var(--accent)]" />
+                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Campus Network</h2>
+              </div>
+              <CampusNetworkCard universityName={data.profile?.university} />
+            </section>
+
+            {/* Weekly + Monthly tactical layer */}
+            <section className="mt-10 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                <div className="mb-3 flex items-center gap-2">
+                  <Calendar size={14} className="text-[var(--accent)]" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">This week</span>
+                </div>
+                <p className="text-[13.5px] font-semibold leading-snug text-[var(--foreground)]">
+                  {weeklyTask?.title || "Friday portfolio push"}
+                </p>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--muted-foreground)]">
+                  {weeklyTask?.why || pathway.weeklyPortfolio}
+                </p>
+                {weeklyTask && (
+                  <button
+                    type="button"
+                    onClick={() => toggleTask(weeklyTask.id)}
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[11.5px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--background-secondary)]"
+                  >
+                    <Check size={12} /> Mark done
+                  </button>
+                )}
+              </div>
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                <div className="mb-3 flex items-center gap-2">
+                  <GraduationCap size={14} className="text-[var(--accent)]" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">This month</span>
+                </div>
+                <p className="text-[13.5px] font-semibold leading-snug text-[var(--foreground)]">
+                  Course correction check
+                </p>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--muted-foreground)]">
+                  {pathway.courseCorrection}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard?tab=roadmap")}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--accent)] hover:underline"
+                >
+                  Open the 4-Year Vault <ArrowRight size={12} />
+                </button>
+              </div>
+            </section>
           </div>
         )}
 
         {tab === "roadmap" && (
-          <div className="max-w-2xl mx-auto animate-fade-up">
-            {/* Minimal header */}
-            <header className="pt-2 pb-8 flex items-end justify-between">
+          <div className="animate-fade-up">
+            <header className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-2">
               <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight">Roadmap</h1>
-                <p className="mt-1 text-sm text-[var(--muted)]">{semesters.length} semesters mapped out</p>
+                <h1 className="text-[2rem] font-semibold tracking-tight">4-Year Vault</h1>
+                <p className="mt-1.5 text-sm text-[var(--muted)]">
+                  {semesters.length} semesters mapped to your trajectory.
+                </p>
               </div>
               <button
+                type="button"
                 onClick={() => router.push("/onboarding")}
-                className="text-[12px] font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
               >
                 <RefreshCcw size={12} /> Regenerate
               </button>
             </header>
 
-            {/* Semester sections */}
-            <div className="space-y-10">
-              {semesters.map((s) => (
-                <section key={s.semester}>
-                  {/* Semester heading */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">{s.semester}</h2>
-                    {s.status === "current" ? (
-                      <span className="rounded-full bg-[var(--accent)] px-2 py-[1px] text-[9px] font-semibold uppercase text-white tracking-wide">Now</span>
-                    ) : (
-                      <span className="text-[11px] font-medium text-[var(--muted)] capitalize">{s.status}</span>
-                    )}
-                    <div className="flex-1 h-px bg-[var(--border)]" />
-                  </div>
-
-                  {/* Task rows */}
-                  <div className="space-y-0.5">
-                    {s.tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="group flex items-start gap-3.5 rounded-xl px-4 py-3 hover:bg-[var(--surface)] transition-all duration-100"
-                      >
-                        {/* Dot indicator */}
-                        <div className={`mt-[7px] h-2 w-2 shrink-0 rounded-full ${
-                          s.status === "current" ? "bg-[var(--accent)]" : s.status === "completed" ? "bg-[var(--border-hover)]" : "bg-[var(--border)]"
-                        }`} />
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2.5">
-                            <p className="text-[14px] font-medium text-[var(--foreground)]">{task.title}</p>
-                            <CategoryPill category={task.category} />
-                          </div>
-                          <p className="mt-1 text-xs text-[var(--muted-foreground)] leading-relaxed">{task.why}</p>
-                        </div>
-
-                        {/* Effort + help */}
-                        <div className="hidden sm:flex items-center gap-3 shrink-0 pt-0.5">
-                          <span className="text-[11px] font-medium text-[var(--muted)]">{task.effort}</span>
-                          <button
-                            onClick={() => { setChatMessage(`Help me with: ${task.title}`); router.push("/dashboard?tab=assistant"); }}
-                            className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-[var(--accent)] hover:underline transition-opacity duration-100"
-                          >
-                            Get help
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {tab === "month" && (
-          <div className="max-w-2xl mx-auto animate-fade-up">
-            {/* Minimal header */}
-            <header className="pt-2 pb-8">
-              <h1 className="text-[2rem] font-semibold tracking-tight">{new Date().toLocaleString("en-US", { month: "long" })}</h1>
-              <div className="mt-3 flex items-center gap-4">
-                <p className="text-sm text-[var(--muted)]">
-                  {completedCount} of {monthlyTasks.length} done
-                </p>
-                <div className="flex-1 max-w-[160px] h-1 rounded-full bg-[var(--background-secondary)]">
-                  <div className="h-full rounded-full bg-[var(--accent)] transition-all duration-500" style={{ width: `${(completedCount / (monthlyTasks.length || 1)) * 100}%` }} />
-                </div>
-              </div>
-            </header>
-
-            {/* Clean task list */}
-            <div className="space-y-1">
-              {monthlyTasks.map((task) => {
-                const done = completed.includes(task.id);
-                return (
-                  <div
-                    key={task.id}
-                    className={`group flex items-start gap-3.5 rounded-xl px-4 py-3.5 transition-all duration-100 ${
-                      done ? "opacity-45" : "hover:bg-[var(--surface)]"
-                    }`}
-                  >
-                    {/* Checkbox */}
-                    <button
-                      onClick={() => toggleTask(task.id)}
-                      className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all duration-100 ${
-                        done
-                          ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                          : "border-[var(--border-hover)] hover:border-[var(--accent)] bg-transparent"
-                      }`}
-                    >
-                      {done && <Check size={11} strokeWidth={3} />}
-                    </button>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2.5">
-                        <p className={`text-[14px] font-medium ${done ? "line-through text-[var(--muted)]" : "text-[var(--foreground)]"}`}>
-                          {task.title}
-                        </p>
-                        <CategoryPill category={task.category} />
-                      </div>
-                      <p className={`mt-1 text-xs leading-relaxed ${done ? "text-[var(--muted)]" : "text-[var(--muted-foreground)]"}`}>
-                        {task.why}
-                      </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="hidden sm:flex items-center gap-1.5 shrink-0 pt-0.5">
-                      <span className="text-[11px] font-medium text-[var(--muted)] mr-1">{task.effort}</span>
-                      {task.id.startsWith("cw_") ? (
-                        <span className="text-[10px] font-medium text-amber-400 bg-amber-500/10 rounded-md px-1.5 py-0.5">
-                          <BookOpen size={10} className="inline mr-0.5" />{task.why}
-                        </span>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => toggleInterest(task.id)}
-                            className={`rounded-md p-1 transition-all ${
-                              taskPrefs.interested.includes(task.id)
-                                ? "text-[var(--accent)] bg-[var(--accent-light)]"
-                                : "opacity-0 group-hover:opacity-100 text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)]"
-                            }`}
-                            title="Interested"
-                          >
-                            <ThumbsUp size={12} />
-                          </button>
-                          <button
-                            onClick={() => dismissTask(task.id)}
-                            className="opacity-0 group-hover:opacity-100 rounded-md p-1 text-[var(--muted)] hover:text-red-400 hover:bg-red-500/10 transition-all"
-                            title="Not relevant"
-                          >
-                            <XIcon size={12} />
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={() => { setChatMessage(`Help me with: ${task.title}`); router.push("/dashboard?tab=assistant"); }}
-                        className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-[var(--accent)] hover:underline transition-opacity duration-100 ml-1"
-                      >
-                        Get help
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Empty state if all done */}
-            {monthlyTasks.length > 0 && completedCount === monthlyTasks.length && (
-              <div className="mt-8 text-center py-8">
-                <p className="text-sm font-medium text-[var(--foreground)]">All done for {new Date().toLocaleString("en-US", { month: "long" })}.</p>
-                <p className="mt-1 text-xs text-[var(--muted)]">Check back next month or explore your full roadmap.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "assistant" && (
-          <div className="max-w-2xl mx-auto animate-fade-up flex flex-col" style={{ minHeight: "calc(100vh - 140px)" }}>
-            {/* Messages area */}
-            <div className="flex-1 space-y-6 pb-6">
-              {/* Empty state with suggestions */}
-              {(!data.chatThreads.find((t: any) => t.id === threadId)?.messages.length) && (
-                <div className="pt-12 pb-8">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="h-9 w-9 rounded-xl bg-[var(--accent)] flex items-center justify-center">
-                      <Sparkles size={16} className="text-white" />
-                    </div>
-                    <div>
-                      <h1 className="text-[2rem] font-semibold tracking-tight">Ask anything</h1>
-                    </div>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {[
-                      { label: "Warm intro for an alum", desc: "Draft a polite LinkedIn DM" },
-                      { label: "Micro-skill for today", desc: "15 min, high leverage" },
-                      { label: "Friday portfolio push", desc: "What to ship this week" },
-                      { label: "Monthly audit", desc: "Credits, burnout, registration" },
-                    ].map(p => (
-                      <button
-                        key={p.label}
-                        onClick={() => setChatMessage(p.label)}
-                        className="text-left rounded-xl border border-[var(--border)] px-4 py-3 hover:bg-[var(--surface)] hover:border-[var(--accent)]/20 transition-all group"
-                      >
-                        <p className="text-[13px] font-medium text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">{p.label}</p>
-                        <p className="text-[11px] text-[var(--muted)] mt-0.5">{p.desc}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Messages */}
-              {(data.chatThreads.find((item: any) => item.id === threadId)?.messages || []).map((m: any, i: number) => (
-                <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
-                  {m.role === "assistant" && (
-                    <div className="h-7 w-7 shrink-0 rounded-full bg-[var(--accent)] flex items-center justify-center mt-0.5">
-                      <Sparkles size={12} className="text-white" />
-                    </div>
-                  )}
-                  <div className={`max-w-[85%] text-[14px] leading-relaxed ${
-                    m.role === "assistant"
-                      ? "text-[var(--foreground)]"
-                      : "rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-4 py-3 text-[var(--foreground)]"
-                  }`}>
-                    {m.content}
-                  </div>
-                </div>
-              ))}
-
-              {/* Typing indicator */}
-              {chatPending && (
-                <div className="flex gap-3">
-                  <div className="h-7 w-7 shrink-0 rounded-full bg-[var(--accent)] flex items-center justify-center mt-0.5">
-                    <Sparkles size={12} className="text-white" />
-                  </div>
-                  <div className="flex items-center gap-1 pt-2">
-                    <span className="h-1.5 w-1.5 bg-[var(--muted)] rounded-full animate-bounce" />
-                    <span className="h-1.5 w-1.5 bg-[var(--muted)] rounded-full animate-bounce [animation-delay:0.15s]" />
-                    <span className="h-1.5 w-1.5 bg-[var(--muted)] rounded-full animate-bounce [animation-delay:0.3s]" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Input — sticky at bottom */}
-            <div className="sticky bottom-0 pt-4 pb-6 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent">
-              <div className="relative">
-                <textarea
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
-                  placeholder="Ask anything..."
-                  className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 pr-14 text-[14px] outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/10 min-h-[56px] max-h-36 shadow-[var(--shadow-card)]"
-                  rows={1}
-                />
+            {semesters.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center">
+                <p className="text-sm font-medium text-[var(--foreground)]">Your vault is empty.</p>
+                <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap from onboarding.</p>
                 <button
-                  onClick={sendChat}
-                  disabled={chatPending || !chatMessage.trim()}
-                  className="absolute right-3 bottom-3 h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--foreground)] text-white disabled:opacity-20 hover:bg-[#333] transition-all"
+                  type="button"
+                  onClick={() => router.push("/onboarding")}
+                  className="mt-5 btn-primary h-10 px-6 text-[13px]"
                 >
-                  <Send size={14} />
+                  Build my roadmap
                 </button>
               </div>
-              <p className="mt-2 text-center text-[10px] text-[var(--muted)]">AI can make mistakes. Verify important info.</p>
-            </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {semesters.map((s) => (
+                  <SemesterCard
+                    key={s.semester}
+                    semester={s}
+                    completed={completed}
+                    onToggle={toggleTask}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -858,43 +367,176 @@ export default function DashboardPage() {
   );
 }
 
-function PathwayCard({
-  label,
-  icon,
-  accent,
-  children,
-  className = "",
-}: {
-  label: string;
-  icon: ReactNode;
-  accent: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
+/* ────────────────────────────────────────────────── */
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+}
+
+function CopyButton({ onClick, copied }: { onClick: () => void; copied: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+    <motion.button
+      type="button"
+      onClick={onClick}
+      animate={copied ? { scale: [1, 1.04, 1] } : { scale: 1 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-2xl border p-4 shadow-[var(--shadow-sm)] ${accent} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12px] font-semibold transition-colors ${
+        copied
+          ? "bg-emerald-500 text-white"
+          : "bg-[var(--foreground)] text-white hover:opacity-90"
+      }`}
     >
-      <div className="mb-2 flex items-center gap-2">
-        {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">{label}</span>
-      </div>
-      {children}
-    </motion.div>
+      {copied ? (
+        <>
+          <Check size={12} strokeWidth={3} /> Copied
+        </>
+      ) : (
+        "Copy DM"
+      )}
+    </motion.button>
   );
 }
+
+function PathwayTimeline({ profile }: { profile: any }) {
+  const year = profile?.yearOfStudy?.trim() || "Sophomore";
+  const uni = profile?.university?.trim() || "Your campus";
+  const dream = profile?.dreamRole?.trim() || "Your dream role";
+  const major = profile?.degree?.trim() || "your major";
+  const graduating = profile?.graduating?.trim() || "May 2028";
+  const internshipLabel = `Summer ${getInternshipYear(graduating)} internship`;
+
+  const steps = [
+    { label: year, sub: uni, status: "current" as const, icon: <School size={14} /> },
+    { label: internshipLabel, sub: "Reverse-engineered target", status: "next" as const, icon: <Briefcase size={14} /> },
+    { label: dream, sub: short(major), status: "goal" as const, icon: <Target size={14} /> },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+      <div className="mb-4 flex items-center gap-2">
+        <Target size={14} className="text-[var(--accent)]" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">The Pathway</span>
+      </div>
+      <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
+        {steps.map((step, idx) => (
+          <div key={idx} className="contents">
+            <div
+              className={`flex items-start gap-3 rounded-xl border p-3 ${
+                step.status === "current"
+                  ? "border-[var(--accent)]/30 bg-[var(--accent-light)]"
+                  : step.status === "goal"
+                  ? "border-[var(--border)] bg-[var(--surface-secondary)]"
+                  : "border-[var(--border)] bg-[var(--surface)]"
+              }`}
+            >
+              <div
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                  step.status === "current"
+                    ? "bg-[var(--accent)] text-white"
+                    : step.status === "goal"
+                    ? "bg-[var(--foreground)] text-[var(--background)]"
+                    : "bg-[var(--background-secondary)] text-[var(--muted-foreground)]"
+                }`}
+              >
+                {step.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[12.5px] font-semibold leading-snug text-[var(--foreground)]">{step.label}</p>
+                <p className="mt-0.5 truncate text-[11px] text-[var(--muted)]">{step.sub}</p>
+              </div>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className="hidden items-center justify-center md:flex">
+                <ChevronRight size={14} className="text-[var(--muted)]" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getInternshipYear(graduating: string): string {
+  const match = graduating.match(/(\d{4})/);
+  if (!match) return new Date().getFullYear() + 1 + "";
+  const gradYear = parseInt(match[1], 10);
+  return `${gradYear - 1}`;
+}
+
+function short(s: string, n = 38) {
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+function SemesterCard({
+  semester,
+  completed,
+  onToggle,
+}: {
+  semester: Semester;
+  completed: string[];
+  onToggle: (id: string) => void;
+}) {
+  const done = semester.tasks.filter((t) => completed.includes(t.id)).length;
+  const total = semester.tasks.length;
+  return (
+    <div className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">{semester.semester}</p>
+          <p className="mt-0.5 text-[10.5px] capitalize text-[var(--muted)]">{semester.status}</p>
+        </div>
+        {semester.status === "current" ? (
+          <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">Now</span>
+        ) : (
+          <span className="shrink-0 text-[10px] font-medium text-[var(--muted)]">{done}/{total}</span>
+        )}
+      </div>
+      <div className="flex-1 space-y-1 px-2 py-2">
+        {semester.tasks.length === 0 ? (
+          <p className="px-3 py-4 text-center text-[11.5px] text-[var(--muted)]">Open block — add classes in Settings.</p>
+        ) : (
+          semester.tasks.map((task) => {
+            const isDone = completed.includes(task.id);
+            return (
+              <button
+                key={task.id}
+                type="button"
+                onClick={() => onToggle(task.id)}
+                className={`group flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                  isDone ? "opacity-50" : "hover:bg-[var(--surface-secondary)]"
+                }`}
+              >
+                <span
+                  className={`mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-colors ${
+                    isDone
+                      ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                      : "border-[var(--border-hover)] group-hover:border-[var(--accent)]"
+                  }`}
+                >
+                  {isDone && <Check size={9} strokeWidth={3.5} />}
+                </span>
+                <span className={`text-[11.5px] leading-snug ${isDone ? "text-[var(--muted)] line-through" : "text-[var(--foreground)]"}`}>
+                  {task.title}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Pathway content (no emojis) ───────────────── */
 
 type PathwayCopy = {
   warmIntro: { body: string; dmDraft: string };
   microSkill: { body: string; cta: string; href: string };
   campus: { body: string };
   weeklyPortfolio: string;
-  internshipRadar: string;
   courseCorrection: string;
-  burnoutCheck: string;
 };
 
 function buildPathwayContent(profile: any | null | undefined): PathwayCopy {
@@ -902,22 +544,21 @@ function buildPathwayContent(profile: any | null | undefined): PathwayCopy {
   const dream = profile?.dreamRole?.trim() || "your dream role";
   const uni = profile?.university?.trim() || "campus";
   const year = profile?.yearOfStudy?.trim() || "this year";
-  const minor = profile?.minor?.trim();
 
   const warmIntro = {
-    body: `Someone who graduated from ${major} about two years ago just posted they joined a strong team in your field. A polite 10-minute coffee chat on LinkedIn is one of the highest-ROI moves you can make today.`,
+    body: `An alum from ${major} just posted they joined a strong team in your field. A polite 10-minute coffee chat on LinkedIn is one of the highest-ROI moves you can make today.`,
     dmDraft: `Hi [Name] — I'm a ${year} student in ${major} at ${uni} and really admire the path you took into [their company]. I'm not asking for a referral — would you have 10 minutes for a quick virtual coffee so I could learn how you broke in? Either way, thank you for considering.`,
   };
 
   const dreamLower = dream.toLowerCase();
   let microBody =
     "Pick one concrete skill gap between you and entry-level postings for your goal — then close it in under 20 minutes today.";
-  let microCta = "Browse free Google Career Certificates";
+  let microCta = "Open free Google Career Certificates";
   let microHref = "https://grow.google/certificates/";
   if (dreamLower.includes("market") || dreamLower.includes("growth") || dreamLower.includes("brand")) {
     microBody =
-      "You want to be in marketing? A huge share of entry-level roles expect Google Analytics (or similar). Knock out a short free module between classes — it goes straight on your resume.";
-    microCta = "Open Google Analytics Skillshop (free)";
+      "A big share of entry-level marketing roles expect Google Analytics. Knock out a short free module between classes — it goes straight on your resume.";
+    microCta = "Open Google Analytics Skillshop";
     microHref = "https://skillshop.withgoogle.com/";
   } else if (dreamLower.includes("data") || dreamLower.includes("analyst") || dreamLower.includes("scientist")) {
     microBody =
@@ -926,52 +567,39 @@ function buildPathwayContent(profile: any | null | undefined): PathwayCopy {
     microHref = "https://www.sqlbolt.com/lesson/select_basics";
   } else if (dreamLower.includes("software") || dreamLower.includes("engineer") || dreamLower.includes("developer")) {
     microBody =
-      "Ship one tiny improvement to a class project on GitHub today (README, tests, or a refactor). Recruiters skim repos — momentum beats a perfect capstone.";
-    microCta = "GitHub docs: Hello World repository";
+      "Ship one tiny improvement to a class project on GitHub today — README, tests, or a refactor. Recruiters skim repos; momentum beats a perfect capstone.";
+    microCta = "Open GitHub get-started docs";
     microHref = "https://docs.github.com/en/get-started";
+  } else if (dreamLower.includes("mech") || dreamLower.includes("aero")) {
+    microBody =
+      "Spend 15 minutes brushing up on CAD tolerances — it's the kind of micro-skill that pays off in your next design class and on a co-op resume.";
+    microCta = "Read a 3-min CAD tolerances primer";
+    microHref = "https://www.engineeringtoolbox.com/iso-tolerances-d_2202.html";
   }
 
   const campus = {
-    body: `The Economics club at ${uni} is hosting a guest speaker from a firm you care about — today at 4:00 PM, Room 302, free pizza. You have a gap in your schedule: showing up is serendipity you can't buy.`,
+    body: `The ${guessClub(major)} at ${uni} is meeting later today. You have a gap in your schedule — showing up is serendipity you can't buy.`,
   };
 
-  const weeklyPortfolio = `Take 30 minutes before Sunday: upload or polish the best artifact from your last ${major} project (screenshots, README, demo link) to GitHub or your portfolio. One push = your resume just got stronger without rewriting a page.`;
+  const weeklyPortfolio = `Take 30 minutes before Sunday: upload or polish the best artifact from a recent ${major} project (screenshots, README, demo link). One push and your resume just got stronger without rewriting a page.`;
 
-  const internshipRadar = `Applications for summer internships in ${dream} often open 8–12 weeks out. This weekend, spend 20 minutes weaving ATS keywords from real job posts into your CV — we can walk you through it in AI Assist.`;
-
-  const courseCorrection = `Registration for next term is around the corner. Based on your goal (${dream})${minor ? ` and your interest in a ${minor} angle` : ""}, double-check you're not missing a prerequisite — e.g. if Data Science is on your radar, confirm any stats sequence your catalog requires before seats fill.`;
-
-  const burnoutCheck = `If you're stacking heavy credits, sanity-check the load: aggressive schedules tank GPA for a lot of students. If next semester looks brutal, consider swapping one intense elective for a lighter gen-ed — protecting your trajectory matters more than hero mode.`;
+  const courseCorrection = `Registration is around the corner. Based on your goal (${dream}), double-check you're not missing a prerequisite before seats fill — drop any class that doesn't move you forward.`;
 
   return {
     warmIntro,
     microSkill: { body: microBody, cta: microCta, href: microHref },
     campus,
     weeklyPortfolio,
-    internshipRadar,
     courseCorrection,
-    burnoutCheck,
   };
 }
 
-function categoryColor(cat: string) {
-  const colors: Record<string, string> = {
-    INTERNSHIP: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    CV: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-    NETWORKING: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-    ACADEMICS: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    VISA: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    SKILLS: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-    COURSEWORK: "bg-pink-500/10 text-pink-400 border-pink-500/20",
-  };
-  return colors[cat] || "bg-slate-500/10 text-slate-400 border-slate-500/20";
+function guessClub(major: string): string {
+  const m = major.toLowerCase();
+  if (m.includes("comp") || m.includes("software")) return "Computer Science club";
+  if (m.includes("mech") || m.includes("aero")) return "Engineering Society";
+  if (m.includes("econ") || m.includes("finan") || m.includes("business")) return "Economics club";
+  if (m.includes("bio") || m.includes("pre-med") || m.includes("nurs")) return "Pre-Health Society";
+  if (m.includes("data") || m.includes("stat")) return "Data Science club";
+  return "career club for your major";
 }
-
-function CategoryPill({ category }: { category: string }) {
-  return (
-    <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${categoryColor(category)}`}>
-      {category}
-    </span>
-  );
-}
-

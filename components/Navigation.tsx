@@ -5,19 +5,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Bell, ChevronDown, Loader2, LogOut, Moon, Settings, Sun, User as UserIcon } from "lucide-react";
+import { Bell, ChevronDown, Flame, Loader2, LogOut, Moon, Settings, Sun, User as UserIcon } from "lucide-react";
 import { signout } from "@/actions/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import BrandWordmark from "./BrandWordmark";
 import { useTheme } from "@/lib/theme";
+import { getStreak, bumpStreak } from "@/lib/streak";
 
 const appNavItems = [
   { href: "/dashboard",               label: "Overview",   tab: "overview" },
-  { href: "/planner",                 label: "Planner" },
   { href: "/dashboard?tab=roadmap",   label: "Roadmap",    tab: "roadmap"   },
-  { href: "/dashboard?tab=month",     label: "This Month", tab: "month"     },
-  { href: "/cv-analyzer",             label: "CV" },
-  { href: "/dashboard?tab=assistant", label: "AI",         tab: "assistant" },
+  { href: "/settings",                label: "Settings" },
 ];
 
 export default function Navigation({ initialUser }: { initialUser?: User | null }) {
@@ -29,6 +27,8 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
   const [notiOpen, setNotiOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const { theme, setTheme, resolved } = useTheme();
+  const [streak, setStreak] = useState(0);
+  const [streakPulse, setStreakPulse] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
   const notiRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +53,31 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
     document.addEventListener("mousedown", fn);
     return () => document.removeEventListener("mousedown", fn);
   }, []);
+
+  // Update streak on mount + when other tabs update it (storage event)
+  useEffect(() => {
+    if (!user) return;
+    setStreak(getStreak());
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "bluprint_streak_v1") setStreak(getStreak());
+    };
+    const onCustom = () => {
+      const next = getStreak();
+      setStreak((prev) => {
+        if (next > prev) {
+          setStreakPulse(true);
+          setTimeout(() => setStreakPulse(false), 900);
+        }
+        return next;
+      });
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("bluprint:streak", onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("bluprint:streak", onCustom);
+    };
+  }, [user]);
 
   const handleSignOut = async () => {
     setDropdownOpen(false);
@@ -106,7 +131,7 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
 
           {/* Center: segment switcher for app pages, marketing links for public */}
           {isApp && user ? (
-            <div className="hidden sm:flex items-center">
+            <div className="hidden sm:flex items-center gap-3">
               <div className="segment-switcher !gap-[1px]">
                 {appNavItems.map((item) => {
                   const active = isNavActive(item);
@@ -121,6 +146,17 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
                   );
                 })}
               </div>
+              {streak > 0 && (
+                <motion.div
+                  animate={streakPulse ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.45 }}
+                  className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--foreground)]"
+                  title={`${streak}-day streak`}
+                >
+                  <Flame size={12} className={streakPulse ? "text-orange-500" : "text-[var(--accent)]"} />
+                  <span>{streak}</span>
+                </motion.div>
+              )}
             </div>
           ) : !isAuth && !isApp ? (
             <div className="hidden items-center gap-8 md:flex">
