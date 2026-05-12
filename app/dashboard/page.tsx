@@ -255,31 +255,29 @@ export default function DashboardPage() {
   if (loading || !data) {
     return (
       <AppShell>
-        <div className="max-w-2xl mx-auto animate-pulse pt-2">
-          {/* Skeleton: greeting */}
+        <div className="mx-auto w-full max-w-6xl animate-pulse pt-2">
           <div className="h-8 w-64 rounded-lg bg-[var(--background-secondary)] mb-3" />
-          <div className="h-4 w-96 rounded-lg bg-[var(--background-secondary)] mb-10" />
-          {/* Skeleton: quick-link cards */}
-          <div className="grid grid-cols-3 gap-3 mb-10">
-            {[0,1,2].map(i => (
-              <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
-                <div className="h-5 w-5 rounded bg-[var(--background-secondary)]" />
-                <div className="h-4 w-20 rounded bg-[var(--background-secondary)]" />
-                <div className="h-3 w-24 rounded bg-[var(--background-secondary)]" />
+          <div className="h-4 max-w-xl rounded-lg bg-[var(--background-secondary)] mb-8" />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+            <div className="space-y-4 md:col-span-7 xl:col-span-8">
+              <div className="h-24 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="h-40 rounded-2xl border border-[var(--border)] bg-[var(--surface)] md:col-span-2" />
+                <div className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+                <div className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
               </div>
-            ))}
+            </div>
+            <div className="space-y-4 md:col-span-5 xl:col-span-4">
+              <div className="h-36 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-28 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+                <div className="h-28 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+              </div>
+            </div>
           </div>
-          {/* Skeleton: task cards */}
-          <div className="space-y-3">
-            {[0,1,2,3].map(i => (
-              <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-5 w-5 rounded-md bg-[var(--background-secondary)]" />
-                  <div className="h-4 w-48 rounded bg-[var(--background-secondary)]" />
-                  <div className="ml-auto h-5 w-16 rounded-lg bg-[var(--background-secondary)]" />
-                </div>
-                <div className="h-3 w-72 rounded bg-[var(--background-secondary)]" />
-              </div>
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-36 rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
             ))}
           </div>
         </div>
@@ -289,293 +287,311 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="max-w-6xl mx-auto">
+      <div className="mx-auto w-full">
         {tab === "overview" && (
-          <div className="max-w-3xl mx-auto animate-fade-up">
-            <header className="pt-2 pb-6">
-              <h1 className="text-[2rem] font-semibold tracking-tight">
-                {(() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })()}, {(data.profile?.name || data.user.name || "Student").split(" ")[0]}.
-              </h1>
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                {cvAnalysis?.summary || "Your dream outcome, reverse-engineered to what matters this week."}
-              </p>
+          <div className="w-full animate-fade-up">
+            <header className="grid gap-4 pb-6 pt-2 sm:grid-cols-[1fr_auto] sm:items-end lg:pb-8">
+              <div>
+                <h1 className="text-[2rem] font-semibold tracking-tight">
+                  {(() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })()}, {(data.profile?.name || data.user.name || "Student").split(" ")[0]}.
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
+                  {cvAnalysis?.summary || "Your dream outcome, reverse-engineered to what matters this week."}
+                </p>
+              </div>
+              <div className="hidden sm:flex flex-wrap items-center justify-end gap-2 text-[11px] font-medium text-[var(--muted)]">
+                <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5">
+                  {completedCount}/{monthlyTasks.length || 0} tasks
+                </span>
+                <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5">
+                  {semesters.length} semesters
+                </span>
+              </div>
             </header>
 
-            {/* The Pathway — engine framing */}
-            <div className="mb-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white">
-                  <Target size={18} />
+            <div className="rounded-2xl border border-transparent bg-transparent p-0 md:rounded-3xl md:border-[var(--border)] md:bg-[var(--surface-secondary)]/40 md:p-5 md:shadow-inner lg:p-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:items-start md:gap-6 lg:gap-7">
+              {/* Main column: pathway + daily feed */}
+              <div className="space-y-6 md:col-span-7 xl:col-span-8">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 shadow-[var(--shadow-sm)]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white">
+                      <Target size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-[var(--foreground)]">The Pathway</p>
+                      <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted)]">
+                        You didn&apos;t just enter your major — you named where you want to land. We work backward from graduation to{" "}
+                        <span className="font-medium text-[var(--foreground)]">this Tuesday</span>: daily micro-wins, weekly portfolio moves, and monthly course corrections so nothing slips.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-[var(--foreground)]">The Pathway</p>
-                  <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted)]">
-                    You didn&apos;t just enter your major — you named where you want to land. We work backward from graduation to{" "}
-                    <span className="text-[var(--foreground)] font-medium">this Tuesday</span>: daily micro-wins, weekly portfolio moves, and monthly course corrections so nothing slips.
-                  </p>
-                </div>
+
+                <section>
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <Zap size={16} className="text-[var(--accent)]" />
+                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Daily Feed</h2>
+                    <span className="rounded-full bg-[var(--accent)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">~5 min</span>
+                  </div>
+                  <p className="mb-4 text-[12px] text-[var(--muted)]">High-leverage moves — not busywork.</p>
+
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <PathwayCard
+                      className="md:col-span-2"
+                      label="Warm intro of the day"
+                      icon={<MessageSquare size={16} className="text-violet-400" />}
+                      accent="border-violet-500/15 bg-violet-500/[0.04]"
+                    >
+                      <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.warmIntro.body}</p>
+                      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+                        {pathway.warmIntro.dmDraft}
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(pathway.warmIntro.dmDraft);
+                              setCopiedId("warm");
+                              setTimeout(() => setCopiedId(null), 2000);
+                            } catch { /* ignore */ }
+                          }}
+                          className="rounded-lg bg-[var(--foreground)] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
+                        >
+                          {copiedId === "warm" ? "Copied" : "Copy DM"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setChatMessage("Polish my LinkedIn DM for a coffee chat with an alum"); router.push("/dashboard?tab=assistant"); }}
+                          className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface)]"
+                        >
+                          Refine with AI
+                        </button>
+                      </div>
+                    </PathwayCard>
+
+                    <PathwayCard
+                      label="Micro-skill drop"
+                      icon={<Flame size={16} className="text-orange-400" />}
+                      accent="border-orange-500/15 bg-orange-500/[0.04]"
+                    >
+                      <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.microSkill.body}</p>
+                      <button
+                        type="button"
+                        onClick={() => window.open(pathway.microSkill.href, "_blank", "noopener,noreferrer")}
+                        className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                      >
+                        {pathway.microSkill.cta}
+                        <ExternalLink size={12} />
+                      </button>
+                    </PathwayCard>
+
+                    <PathwayCard
+                      label="Campus serendipity"
+                      icon={<School size={16} className="text-emerald-400" />}
+                      accent="border-emerald-500/15 bg-emerald-500/[0.04]"
+                    >
+                      <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.campus.body}</p>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/planner")}
+                        className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                      >
+                        Block 30 min in planner →
+                      </button>
+                    </PathwayCard>
+                  </div>
+                </section>
               </div>
+
+              {/* Sidebar: campus, weekly, monthly */}
+              <aside className="space-y-6 md:col-span-5 xl:col-span-4 md:sticky md:top-24 md:self-start">
+                <section>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <Users size={16} className="text-[var(--accent)]" />
+                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Campus Network</h2>
+                  </div>
+                  <p className="mb-3 text-[12px] text-[var(--muted)]">Peers on the same trajectory.</p>
+                  <CampusNetworkCard universityName={data.profile?.university} />
+                </section>
+
+                <section>
+                  <div className="mb-2 flex items-center gap-2">
+                    <Calendar size={16} className="text-[var(--accent)]" />
+                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Weekly sync</h2>
+                  </div>
+                  <p className="mb-3 text-[12px] text-[var(--muted)]">Portfolio + internship runway.</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Friday portfolio push</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.weeklyPortfolio}</p>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/cv-analyzer")}
+                        className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                      >
+                        Open CV analyzer
+                      </button>
+                    </div>
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Internship radar</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.internshipRadar}</p>
+                      <button
+                        type="button"
+                        onClick={() => { setChatMessage("Help me add ATS keywords to my resume for summer internships"); router.push("/dashboard?tab=assistant"); }}
+                        className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                      >
+                        20-min resume pass with AI →
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <div className="mb-2 flex items-center gap-2">
+                    <GraduationCap size={16} className="text-[var(--accent)]" />
+                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Monthly audit</h2>
+                  </div>
+                  <p className="mb-3 text-[12px] text-[var(--muted)]">Credits, registration, sanity checks.</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Course correction</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.courseCorrection}</p>
+                    </div>
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Burnout check</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.burnoutCheck}</p>
+                    </div>
+                  </div>
+                </section>
+              </aside>
             </div>
+          </div>
 
-            {/* — Daily Feed — */}
-            <section className="mb-12">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <Zap size={16} className="text-[var(--accent)]" />
-                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Daily Feed</h2>
-                <span className="rounded-full bg-[var(--accent)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">~5 min</span>
-              </div>
-              <p className="mb-5 text-[12px] text-[var(--muted)]">Not homework — high-leverage, low-friction moves that make you feel insanely productive.</p>
-
-              <div className="space-y-3">
-                <PathwayCard
-                  label="Warm intro of the day"
-                  icon={<MessageSquare size={16} className="text-violet-400" />}
-                  accent="border-violet-500/15 bg-violet-500/[0.04]"
-                >
-                  <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.warmIntro.body}</p>
-                  <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[var(--muted-foreground)]">
-                    {pathway.warmIntro.dmDraft}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(pathway.warmIntro.dmDraft);
-                          setCopiedId("warm");
-                          setTimeout(() => setCopiedId(null), 2000);
-                        } catch { /* ignore */ }
-                      }}
-                      className="rounded-lg bg-[var(--foreground)] px-3 py-1.5 text-[11px] font-semibold text-white hover:opacity-90 transition-opacity"
-                    >
-                      {copiedId === "warm" ? "Copied" : "Copy DM"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setChatMessage("Polish my LinkedIn DM for a coffee chat with an alum"); router.push("/dashboard?tab=assistant"); }}
-                      className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors"
-                    >
-                      Refine with AI
-                    </button>
-                  </div>
-                </PathwayCard>
-
-                <PathwayCard
-                  label="Micro-skill drop"
-                  icon={<Flame size={16} className="text-orange-400" />}
-                  accent="border-orange-500/15 bg-orange-500/[0.04]"
-                >
-                  <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.microSkill.body}</p>
-                  <button
-                    type="button"
-                    onClick={() => window.open(pathway.microSkill.href, "_blank", "noopener,noreferrer")}
-                    className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                  >
-                    {pathway.microSkill.cta}
-                    <ExternalLink size={12} />
-                  </button>
-                </PathwayCard>
-
-                <PathwayCard
-                  label="Campus serendipity"
-                  icon={<School size={16} className="text-emerald-400" />}
-                  accent="border-emerald-500/15 bg-emerald-500/[0.04]"
-                >
-                  <p className="text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.campus.body}</p>
+            {/* Bottom band: shortcuts + month + timeline */}
+            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 md:items-stretch">
+              <div className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Shortcuts</p>
+                <div className="grid flex-1 grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => router.push("/planner")}
-                    className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                    className="group flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2 py-3 text-center transition-all hover:border-[var(--accent)]/25 hover:shadow-sm"
                   >
-                    Block 30 min in planner →
+                    <ClipboardList size={18} className="text-[var(--accent)]" />
+                    <span className="text-[12px] font-medium text-[var(--foreground)]">Planner</span>
                   </button>
-                </PathwayCard>
-              </div>
-            </section>
-
-            {/* — Campus Network — */}
-            <section className="mb-12">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <Users size={16} className="text-[var(--accent)]" />
-                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Campus Network</h2>
-              </div>
-              <p className="mb-5 text-[12px] text-[var(--muted)]">
-                Connect with peers at your school who are on the same trajectory.
-              </p>
-              <CampusNetworkCard universityName={data.profile?.university} />
-            </section>
-
-            {/* — Weekly Sync — */}
-            <section className="mb-12">
-              <div className="mb-1 flex items-center gap-2">
-                <Calendar size={16} className="text-[var(--accent)]" />
-                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Weekly sync</h2>
-              </div>
-              <p className="mb-5 text-[12px] text-[var(--muted)]">Tactical moves: portfolio + internship runway.</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Friday portfolio push</p>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.weeklyPortfolio}</p>
                   <button
                     type="button"
                     onClick={() => router.push("/cv-analyzer")}
-                    className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                    className="group flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2 py-3 text-center transition-all hover:border-[var(--accent)]/25 hover:shadow-sm"
                   >
-                    Open CV analyzer
+                    <div className="relative h-5 w-5">
+                      <svg className="h-full w-full" viewBox="0 0 100 100">
+                        <circle className="text-[var(--background-secondary)]" strokeWidth="12" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                        <circle className="text-[var(--accent)]" strokeWidth="12" strokeDasharray={251} strokeDashoffset={251 - (251 * (cvAnalysis?.score || 0)) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                      </svg>
+                    </div>
+                    <span className="text-[12px] font-medium text-[var(--foreground)]">CV {cvAnalysis?.score ?? 0}</span>
                   </button>
-                </div>
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Internship radar</p>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.internshipRadar}</p>
                   <button
                     type="button"
-                    onClick={() => { setChatMessage("Help me add ATS keywords to my resume for summer internships"); router.push("/dashboard?tab=assistant"); }}
-                    className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                    onClick={() => router.push("/dashboard?tab=assistant")}
+                    className="group flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2 py-3 text-center transition-all hover:border-[var(--accent)]/25 hover:shadow-sm"
                   >
-                    20-min resume pass with AI →
+                    <Sparkles size={18} className="text-[var(--accent)]" />
+                    <span className="text-[12px] font-medium text-[var(--foreground)]">AI</span>
                   </button>
                 </div>
               </div>
-            </section>
 
-            {/* — Monthly Audit — */}
-            <section className="mb-10">
-              <div className="mb-1 flex items-center gap-2">
-                <GraduationCap size={16} className="text-[var(--accent)]" />
-                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Monthly audit</h2>
-              </div>
-              <p className="mb-5 text-[12px] text-[var(--muted)]">Macro strategy: registration, credits, and sanity checks.</p>
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Course correction</p>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.courseCorrection}</p>
-                </div>
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Burnout check</p>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.burnoutCheck}</p>
-                </div>
-              </div>
-            </section>
-
-            {/* Quick links row */}
-            <div className="grid grid-cols-3 gap-3 mb-10">
-              <button
-                onClick={() => router.push("/planner")}
-                className="group rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4 text-left hover:border-[var(--accent)]/20 hover:shadow-sm transition-all"
-              >
-                <ClipboardList size={18} className="text-[var(--accent)] mb-2" />
-                <p className="text-[13px] font-medium text-[var(--foreground)]">Planner</p>
-                <p className="text-[11px] text-[var(--muted)] mt-0.5">Weekly schedule</p>
-              </button>
-              <button
-                onClick={() => router.push("/cv-analyzer")}
-                className="group rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4 text-left hover:border-[var(--accent)]/20 hover:shadow-sm transition-all"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="relative h-5 w-5">
-                    <svg className="h-full w-full" viewBox="0 0 100 100">
-                      <circle className="text-[var(--background-secondary)]" strokeWidth="12" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                      <circle className="text-[var(--accent)]" strokeWidth="12" strokeDasharray={251} strokeDashoffset={251 - (251 * (cvAnalysis?.score || 0)) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-semibold text-[var(--accent)]">{cvAnalysis?.score || 0}</span>
-                </div>
-                <p className="text-[13px] font-medium text-[var(--foreground)]">CV Score</p>
-                <p className="text-[11px] text-[var(--muted)] mt-0.5">View analysis</p>
-              </button>
-              <button
-                onClick={() => router.push("/dashboard?tab=assistant")}
-                className="group rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4 text-left hover:border-[var(--accent)]/20 hover:shadow-sm transition-all"
-              >
-                <Sparkles size={18} className="text-[var(--accent)] mb-2" />
-                <p className="text-[13px] font-medium text-[var(--foreground)]">AI Assist</p>
-                <p className="text-[11px] text-[var(--muted)] mt-0.5">Ask anything</p>
-              </button>
-            </div>
-
-            {/* This Month section */}
-            <section className="mb-10">
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">This Month</h2>
-                <span className="text-[11px] font-medium text-[var(--muted)]">{completedCount}/{monthlyTasks.length} done</span>
-                <div className="flex-1 h-px bg-[var(--border)]" />
-                <button
-                  onClick={() => router.push("/dashboard?tab=month")}
-                  className="text-[11px] font-medium text-[var(--accent)] hover:underline"
-                >
-                  View all
-                </button>
-              </div>
-
-              <div className="space-y-0.5">
-                {monthlyTasks.slice(0, 4).map((task) => {
-                  const done = completed.includes(task.id);
-                  return (
-                    <div
-                      key={task.id}
-                      className={`group flex items-start gap-3.5 rounded-xl px-4 py-3 transition-all duration-100 ${
-                        done ? "opacity-45" : "hover:bg-[var(--surface)]"
-                      }`}
+              <section className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] min-h-[200px]">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <h2 className="text-[14px] font-semibold text-[var(--foreground)]">This Month</h2>
+                  <span className="text-[11px] font-medium text-[var(--muted)]">{completedCount}/{monthlyTasks.length} done</span>
+                  <div className="ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/dashboard?tab=month")}
+                      className="text-[11px] font-medium text-[var(--accent)] hover:underline"
                     >
-                      <button
-                        onClick={() => toggleTask(task.id)}
-                        className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all duration-100 ${
-                          done ? "bg-[var(--accent)] border-[var(--accent)] text-white" : "border-[var(--border-hover)] hover:border-[var(--accent)] bg-transparent"
+                      View all
+                    </button>
+                  </div>
+                </div>
+                <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
+                  {monthlyTasks.slice(0, 4).map((task) => {
+                    const done = completed.includes(task.id);
+                    return (
+                      <div
+                        key={task.id}
+                        className={`group flex items-start gap-2.5 rounded-xl px-2 py-2 transition-all duration-100 ${
+                          done ? "opacity-45" : "hover:bg-[var(--background)]"
                         }`}
                       >
-                        {done && <Check size={11} strokeWidth={3} />}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2.5">
-                          <p className={`text-[14px] font-medium ${done ? "line-through text-[var(--muted)]" : "text-[var(--foreground)]"}`}>
-                            {task.title}
-                          </p>
-                          <CategoryPill category={task.category} />
+                        <button
+                          type="button"
+                          onClick={() => toggleTask(task.id)}
+                          className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all duration-100 ${
+                            done ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--border-hover)] bg-transparent hover:border-[var(--accent)]"
+                          }`}
+                        >
+                          {done && <Check size={11} strokeWidth={3} />}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className={`text-[13px] font-medium leading-snug ${done ? "text-[var(--muted)] line-through" : "text-[var(--foreground)]"}`}>
+                              {task.title}
+                            </p>
+                            <CategoryPill category={task.category} />
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[11px] font-medium text-[var(--muted)] shrink-0 pt-0.5">{task.effort}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+                    );
+                  })}
+                </div>
+              </section>
 
-            {/* Timeline section */}
-            <section>
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Timeline</h2>
-                <span className="text-[11px] font-medium text-[var(--muted)]">{semesters.length} semesters</span>
-                <div className="flex-1 h-px bg-[var(--border)]" />
-                <button
-                  onClick={() => router.push("/dashboard?tab=roadmap")}
-                  className="text-[11px] font-medium text-[var(--accent)] hover:underline"
-                >
-                  Full roadmap
-                </button>
-              </div>
-
-              <div className="space-y-0.5">
-                {semesters.map((s) => (
-                  <button
-                    key={s.semester}
-                    onClick={() => router.push("/dashboard?tab=roadmap")}
-                    className="group w-full flex items-center gap-3.5 rounded-xl px-4 py-3 hover:bg-[var(--surface)] transition-all duration-100 text-left"
-                  >
-                    <div className={`h-2 w-2 shrink-0 rounded-full ${
-                      s.status === "current" ? "bg-[var(--accent)]" : s.status === "completed" ? "bg-[var(--border-hover)]" : "bg-[var(--border)]"
-                    }`} />
-                    <p className="text-[14px] font-medium text-[var(--foreground)] flex-1">{s.semester}</p>
-                    {s.status === "current" ? (
-                      <span className="rounded-full bg-[var(--accent)] px-2 py-[1px] text-[9px] font-semibold uppercase text-white tracking-wide">Now</span>
-                    ) : (
-                      <span className="text-[11px] font-medium text-[var(--muted)] capitalize">{s.status}</span>
-                    )}
-                    <span className="text-[11px] text-[var(--muted)]">{s.tasks.length} tasks</span>
-                    <ArrowRight size={13} className="text-[var(--border-hover)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
-              </div>
-            </section>
+              <section className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] min-h-[200px]">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Timeline</h2>
+                  <span className="text-[11px] font-medium text-[var(--muted)]">{semesters.length} semesters</span>
+                  <div className="ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/dashboard?tab=roadmap")}
+                      className="text-[11px] font-medium text-[var(--accent)] hover:underline"
+                    >
+                      Full roadmap
+                    </button>
+                  </div>
+                </div>
+                <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
+                  {semesters.slice(0, 6).map((s) => (
+                    <button
+                      key={s.semester}
+                      type="button"
+                      onClick={() => router.push("/dashboard?tab=roadmap")}
+                      className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-all duration-100 hover:bg-[var(--background)]"
+                    >
+                      <div
+                        className={`h-2 w-2 shrink-0 rounded-full ${
+                          s.status === "current" ? "bg-[var(--accent)]" : s.status === "completed" ? "bg-[var(--border-hover)]" : "bg-[var(--border)]"
+                        }`}
+                      />
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--foreground)]">{s.semester}</p>
+                      {s.status === "current" ? (
+                        <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-[1px] text-[9px] font-semibold uppercase tracking-wide text-white">Now</span>
+                      ) : (
+                        <span className="shrink-0 text-[10px] font-medium capitalize text-[var(--muted)]">{s.status}</span>
+                      )}
+                      <ArrowRight size={13} className="shrink-0 text-[var(--border-hover)] opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
           </div>
         )}
 
@@ -853,18 +869,20 @@ function PathwayCard({
   icon,
   accent,
   children,
+  className = "",
 }: {
   label: string;
   icon: ReactNode;
   accent: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-2xl border p-4 ${accent}`}
+      className={`rounded-2xl border p-4 ${accent} ${className}`}
     >
       <div className="mb-2 flex items-center gap-2">
         {icon}

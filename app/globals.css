@@ -101,7 +101,7 @@ h1, h2, h3, h4, h5, h6 {
     @apply transition-all duration-200 ease-out;
   }
   .page-frame {
-    @apply mx-auto w-full max-w-[1120px] px-5 sm:px-8 lg:px-10;
+    @apply mx-auto w-full max-w-[1360px] px-5 sm:px-8 lg:px-10;
   }
   .max-readable { max-width: 720px; }
 
