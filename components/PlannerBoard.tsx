@@ -33,7 +33,7 @@ export type PlannerEntry = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const WEEKDAYS    = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const plannerHours = Array.from({ length: 15 }, (_, i) => 7 + i); // 7am–9pm
+const plannerHours = Array.from({ length: 18 }, (_, i) => 7 + i); // 7am–12am
 const HOUR_HEIGHT  = 72;
 const FIRST_HOUR   = plannerHours[0];
 const LAST_HOUR    = plannerHours[plannerHours.length - 1];
@@ -105,7 +105,7 @@ function snap(v: number) { return Math.round(v * 2) / 2; }
 function fmtHour(v: number): string {
   const h = Math.floor(v);
   const m = v % 1 >= 0.5 ? ":30" : "";
-  const s = h >= 12 ? "PM" : "AM";
+  const s = (h >= 12 && h < 24) ? "PM" : "AM";
   const n = h % 12 === 0 ? 12 : h % 12;
   return `${n}${m} ${s}`;
 }
@@ -574,7 +574,7 @@ function WeeklyGrid({ weekDates, entries, setEntries, editingId, setEditingId, e
       {/* Main grid — scrollable */}
       <div ref={scrollRef} className="overflow-x-auto overflow-y-auto flex-1 scroll-smooth">
         <div style={{ minWidth: 600 }}>
-          <div className="grid" style={{ gridTemplateColumns: cols, height: plannerHours.length * HOUR_HEIGHT }}>
+          <div className="grid mt-4 mb-8" style={{ gridTemplateColumns: cols, height: plannerHours.length * HOUR_HEIGHT }}>
             {/* Time labels */}
             <div className="relative border-r border-[var(--border)] bg-[var(--surface-secondary)]/40 shrink-0">
               {plannerHours.map((h) => (
