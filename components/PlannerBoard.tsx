@@ -440,13 +440,16 @@ function WeeklyGrid({ weekDates, entries, setEntries, editingId, setEditingId, e
 
   useEffect(() => {
     // Scroll to current hour (or 8 AM if it's too early/late) on mount
-    if (scrollRef.current) {
-      let targetHour = Math.floor(nowHour) - 1; // start 1 hour before current time
-      if (targetHour < FIRST_HOUR) targetHour = FIRST_HOUR;
-      if (targetHour > LAST_HOUR - 4) targetHour = LAST_HOUR - 4;
-      const topOffset = (targetHour - FIRST_HOUR) * HOUR_HEIGHT;
-      scrollRef.current.scrollTop = topOffset;
-    }
+    const timer = setTimeout(() => {
+      if (scrollRef.current) {
+        let targetHour = Math.floor(currentDecimalHour()) - 1; 
+        if (targetHour < FIRST_HOUR) targetHour = FIRST_HOUR;
+        if (targetHour > LAST_HOUR - 4) targetHour = LAST_HOUR - 4;
+        const topOffset = (targetHour - FIRST_HOUR) * HOUR_HEIGHT;
+        scrollRef.current.scrollTo({ top: topOffset, behavior: "smooth" });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -455,11 +458,8 @@ function WeeklyGrid({ weekDates, entries, setEntries, editingId, setEditingId, e
       const t = e.target as HTMLElement;
       if (!t.closest("[data-event-card]") && !t.closest("[data-popover]") && !t.closest("[data-no-drag]")) setEditingId(null);
     };
-    // Close popover on scroll so fixed-position popover doesn't float detached
-    const onScroll = () => setEditingId(null);
     window.addEventListener("mousedown", fn, true);
-    window.addEventListener("scroll", onScroll, true);
-    return () => { window.removeEventListener("mousedown", fn, true); window.removeEventListener("scroll", onScroll, true); };
+    return () => window.removeEventListener("mousedown", fn, true);
   }, [editingId, setEditingId]);
 
   const onUpdate = useCallback((id: string, u: Partial<PlannerEntry>) => setEntries(entries.map((e) => e.id === id ? { ...e, ...u } : e)), [entries, setEntries]);
