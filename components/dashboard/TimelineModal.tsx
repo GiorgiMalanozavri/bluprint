@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Flag, Lock, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   archetypeFor,
   getArcState,
@@ -23,6 +24,12 @@ export default function TimelineModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -37,7 +44,7 @@ export default function TimelineModal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const arc = getArcState(profile);
   const role = roleLabel(profile);
@@ -51,7 +58,7 @@ export default function TimelineModal({
   const currentSemIdx = semesters.findIndex((s) => s.status === "current");
   const progressPercent = currentSemIdx >= 0 ? (currentSemIdx / (semesters.length - 1)) * 100 : 0;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -274,6 +281,7 @@ export default function TimelineModal({
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
