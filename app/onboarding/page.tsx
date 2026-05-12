@@ -399,14 +399,15 @@ export default function OnboardingPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[var(--background)]">
-      <div className="pointer-events-none fixed inset-0 -z-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(59,130,246,0.18),transparent_55%),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(37,99,235,0.08),transparent_45%),radial-gradient(ellipse_60%_40%_at_0%_80%,rgba(96,165,250,0.1),transparent_50%)]" aria-hidden />
-      <div className="pointer-events-none fixed -right-24 top-1/4 h-72 w-72 rounded-full bg-[var(--accent)]/10 blur-3xl" aria-hidden />
-      <div className="pointer-events-none fixed -left-32 bottom-0 h-96 w-96 rounded-full bg-sky-400/15 blur-3xl" aria-hidden />
+      <div
+        className="pointer-events-none fixed inset-0 -z-0 bg-[radial-gradient(ellipse_100%_70%_at_50%_-15%,rgba(0,0,0,0.04),transparent_50%),radial-gradient(ellipse_60%_50%_at_100%_0%,rgba(37,99,235,0.06),transparent_45%)]"
+        aria-hidden
+      />
 
       {/* Progress */}
-      <div className="fixed left-0 right-0 top-0 z-50 h-[3px] bg-[var(--accent)]/15">
+      <div className="fixed left-0 right-0 top-0 z-50 h-[3px] bg-[var(--border)]">
         <div
-          className="h-full bg-gradient-to-r from-sky-500 via-[var(--accent)] to-indigo-500 shadow-[0_0_14px_rgba(37,99,235,0.35)] transition-[width] duration-700 ease-out"
+          className="h-full bg-[var(--accent)] transition-[width] duration-700 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -467,7 +468,7 @@ export default function OnboardingPage() {
 
             <label className="group mt-10 block cursor-pointer">
               <div className="surface-card relative overflow-hidden rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--surface)]/95 p-10 transition-all duration-300 hover:border-[var(--accent)]/50 hover:shadow-[var(--shadow-md)] sm:p-12">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent-light)]/40 via-transparent to-sky-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent-light)]/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="relative">
                   {selectedFile ? (
                     <div className="flex flex-col items-center gap-3">
@@ -536,7 +537,7 @@ export default function OnboardingPage() {
                 <motion.span key={dot}
                   animate={{ scale: loadingIndex % 3 === dot ? 1.25 : 0.85, opacity: loadingIndex % 3 === dot ? 1 : 0.28 }}
                   transition={{ type: "spring", stiffness: 400, damping: 24 }}
-                  className="h-3 w-3 rounded-full bg-gradient-to-br from-sky-400 to-[var(--accent)] shadow-sm shadow-blue-500/30" />
+                  className="h-3 w-3 rounded-full bg-[var(--accent)] shadow-sm shadow-[var(--accent)]/25" />
               ))}
             </div>
             <p className="mt-8 text-lg font-semibold text-[var(--foreground)]">{currentMessages[loadingIndex]}</p>

@@ -309,18 +309,17 @@ export default function DashboardPage() {
               </div>
             </header>
 
-            <div className="rounded-2xl border border-transparent bg-transparent p-0 md:rounded-3xl md:border-[var(--border)] md:bg-[var(--surface-secondary)]/40 md:p-5 md:shadow-inner lg:p-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:items-start md:gap-6 lg:gap-7">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:items-start md:gap-8 lg:gap-10">
               {/* Main column: pathway + daily feed */}
-              <div className="space-y-6 md:col-span-7 xl:col-span-8">
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 shadow-[var(--shadow-sm)]">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white">
+              <div className="min-w-0 space-y-8 md:col-span-7 xl:col-span-8">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-sm shadow-blue-500/15">
                       <Target size={18} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold text-[var(--foreground)]">The Pathway</p>
-                      <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted)]">
+                      <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--muted)]">
                         You didn&apos;t just enter your major — you named where you want to land. We work backward from graduation to{" "}
                         <span className="font-medium text-[var(--foreground)]">this Tuesday</span>: daily micro-wins, weekly portfolio moves, and monthly course corrections so nothing slips.
                       </p>
@@ -329,14 +328,14 @@ export default function DashboardPage() {
                 </div>
 
                 <section>
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
                     <Zap size={16} className="text-[var(--accent)]" />
                     <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Daily Feed</h2>
-                    <span className="rounded-full bg-[var(--accent)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">~5 min</span>
+                    <span className="rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">~5 min</span>
                   </div>
-                  <p className="mb-4 text-[12px] text-[var(--muted)]">High-leverage moves — not busywork.</p>
+                  <p className="mb-5 text-[12px] text-[var(--muted)]">High-leverage moves — not busywork.</p>
 
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <PathwayCard
                       className="md:col-span-2"
                       label="Warm intro of the day"
@@ -405,89 +404,90 @@ export default function DashboardPage() {
                 </section>
               </div>
 
-              {/* Sidebar: campus, weekly, monthly */}
-              <aside className="space-y-6 md:col-span-5 xl:col-span-4 md:sticky md:top-24 md:self-start">
-                <section>
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <Users size={16} className="text-[var(--accent)]" />
-                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Campus Network</h2>
+              {/* Sidebar: single panel, clear sections */}
+              <aside className="min-w-0 md:col-span-5 xl:col-span-4 md:sticky md:top-24 md:self-start">
+                <div className="flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
+                  <div className="border-b border-[var(--border)] p-5">
+                    <div className="mb-1 flex items-center gap-2">
+                      <Users size={16} className="text-[var(--accent)]" />
+                      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Campus Network</h2>
+                    </div>
+                    <p className="mb-4 text-[12px] leading-snug text-[var(--muted)]">Peers on the same trajectory.</p>
+                    <CampusNetworkCard universityName={data.profile?.university} compact />
                   </div>
-                  <p className="mb-3 text-[12px] text-[var(--muted)]">Peers on the same trajectory.</p>
-                  <CampusNetworkCard universityName={data.profile?.university} />
-                </section>
 
-                <section>
-                  <div className="mb-2 flex items-center gap-2">
-                    <Calendar size={16} className="text-[var(--accent)]" />
-                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Weekly sync</h2>
-                  </div>
-                  <p className="mb-3 text-[12px] text-[var(--muted)]">Portfolio + internship runway.</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Friday portfolio push</p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.weeklyPortfolio}</p>
-                      <button
-                        type="button"
-                        onClick={() => router.push("/cv-analyzer")}
-                        className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                      >
-                        Open CV analyzer
-                      </button>
+                  <div className="border-b border-[var(--border)] p-5">
+                    <div className="mb-1 flex items-center gap-2">
+                      <Calendar size={16} className="text-[var(--accent)]" />
+                      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Weekly sync</h2>
                     </div>
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Internship radar</p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.internshipRadar}</p>
-                      <button
-                        type="button"
-                        onClick={() => { setChatMessage("Help me add ATS keywords to my resume for summer internships"); router.push("/dashboard?tab=assistant"); }}
-                        className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
-                      >
-                        20-min resume pass with AI →
-                      </button>
+                    <p className="mb-4 text-[12px] text-[var(--muted)]">Portfolio and internship runway.</p>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Friday portfolio</p>
+                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.weeklyPortfolio}</p>
+                        <button
+                          type="button"
+                          onClick={() => router.push("/cv-analyzer")}
+                          className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                        >
+                          Open CV analyzer
+                        </button>
+                      </div>
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Internship radar</p>
+                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.internshipRadar}</p>
+                        <button
+                          type="button"
+                          onClick={() => { setChatMessage("Help me add ATS keywords to my resume for summer internships"); router.push("/dashboard?tab=assistant"); }}
+                          className="mt-3 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                        >
+                          Resume pass with AI →
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </section>
 
-                <section>
-                  <div className="mb-2 flex items-center gap-2">
-                    <GraduationCap size={16} className="text-[var(--accent)]" />
-                    <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Monthly audit</h2>
-                  </div>
-                  <p className="mb-3 text-[12px] text-[var(--muted)]">Credits, registration, sanity checks.</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Course correction</p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.courseCorrection}</p>
+                  <div className="p-5">
+                    <div className="mb-1 flex items-center gap-2">
+                      <GraduationCap size={16} className="text-[var(--accent)]" />
+                      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Monthly audit</h2>
                     </div>
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Burnout check</p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--foreground)]">{pathway.burnoutCheck}</p>
+                    <p className="mb-4 text-[12px] text-[var(--muted)]">Credits and sanity checks.</p>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Course correction</p>
+                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.courseCorrection}</p>
+                      </div>
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Burnout check</p>
+                        <p className="mt-2 text-[12px] leading-relaxed text-[var(--foreground)]">{pathway.burnoutCheck}</p>
+                      </div>
                     </div>
                   </div>
-                </section>
+                </div>
               </aside>
             </div>
-          </div>
 
-            {/* Bottom band: shortcuts + month + timeline */}
-            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 md:items-stretch">
-              <div className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Shortcuts</p>
-                <div className="grid flex-1 grid-cols-3 gap-2">
+            {/* Bottom band */}
+            <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3 md:items-stretch">
+              <div className="flex min-h-[220px] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                <p className="mb-4 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Shortcuts</p>
+                <div className="grid flex-1 grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => router.push("/planner")}
-                    className="group flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2 py-3 text-center transition-all hover:border-[var(--accent)]/25 hover:shadow-sm"
+                    className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-3 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-light)]/40"
                   >
-                    <ClipboardList size={18} className="text-[var(--accent)]" />
+                    <ClipboardList size={20} className="text-[var(--accent)]" />
                     <span className="text-[12px] font-medium text-[var(--foreground)]">Planner</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => router.push("/cv-analyzer")}
-                    className="group flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2 py-3 text-center transition-all hover:border-[var(--accent)]/25 hover:shadow-sm"
+                    className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-3 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-light)]/40"
                   >
-                    <div className="relative h-5 w-5">
+                    <div className="relative h-6 w-6">
                       <svg className="h-full w-full" viewBox="0 0 100 100">
                         <circle className="text-[var(--background-secondary)]" strokeWidth="12" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
                         <circle className="text-[var(--accent)]" strokeWidth="12" strokeDasharray={251} strokeDashoffset={251 - (251 * (cvAnalysis?.score || 0)) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
@@ -498,54 +498,50 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => router.push("/dashboard?tab=assistant")}
-                    className="group flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2 py-3 text-center transition-all hover:border-[var(--accent)]/25 hover:shadow-sm"
+                    className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-3 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-light)]/40"
                   >
-                    <Sparkles size={18} className="text-[var(--accent)]" />
+                    <Sparkles size={20} className="text-[var(--accent)]" />
                     <span className="text-[12px] font-medium text-[var(--foreground)]">AI</span>
                   </button>
                 </div>
               </div>
 
-              <section className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] min-h-[200px]">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
+              <section className="flex min-h-[220px] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-[var(--border)] pb-3">
                   <h2 className="text-[14px] font-semibold text-[var(--foreground)]">This Month</h2>
                   <span className="text-[11px] font-medium text-[var(--muted)]">{completedCount}/{monthlyTasks.length} done</span>
-                  <div className="ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => router.push("/dashboard?tab=month")}
-                      className="text-[11px] font-medium text-[var(--accent)] hover:underline"
-                    >
-                      View all
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard?tab=month")}
+                    className="ml-auto text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                  >
+                    View all
+                  </button>
                 </div>
-                <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
+                <div className="min-h-0 flex-1 space-y-1">
                   {monthlyTasks.slice(0, 4).map((task) => {
                     const done = completed.includes(task.id);
                     return (
                       <div
                         key={task.id}
-                        className={`group flex items-start gap-2.5 rounded-xl px-2 py-2 transition-all duration-100 ${
-                          done ? "opacity-45" : "hover:bg-[var(--background)]"
+                        className={`flex items-start gap-3 rounded-xl px-1 py-2 transition-colors ${
+                          done ? "opacity-50" : "hover:bg-[var(--surface-secondary)]"
                         }`}
                       >
                         <button
                           type="button"
                           onClick={() => toggleTask(task.id)}
-                          className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all duration-100 ${
+                          className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all ${
                             done ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--border-hover)] bg-transparent hover:border-[var(--accent)]"
                           }`}
                         >
                           {done && <Check size={11} strokeWidth={3} />}
                         </button>
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <p className={`text-[13px] font-medium leading-snug ${done ? "text-[var(--muted)] line-through" : "text-[var(--foreground)]"}`}>
-                              {task.title}
-                            </p>
-                            <CategoryPill category={task.category} />
-                          </div>
+                          <p className={`text-[13px] font-medium leading-snug ${done ? "text-[var(--muted)] line-through" : "text-[var(--foreground)]"}`}>
+                            {task.title}
+                          </p>
+                          <div className="mt-1"><CategoryPill category={task.category} /></div>
                         </div>
                       </div>
                     );
@@ -553,27 +549,25 @@ export default function DashboardPage() {
                 </div>
               </section>
 
-              <section className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] min-h-[200px]">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
+              <section className="flex min-h-[220px] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
+                <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-[var(--border)] pb-3">
                   <h2 className="text-[14px] font-semibold text-[var(--foreground)]">Timeline</h2>
                   <span className="text-[11px] font-medium text-[var(--muted)]">{semesters.length} semesters</span>
-                  <div className="ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => router.push("/dashboard?tab=roadmap")}
-                      className="text-[11px] font-medium text-[var(--accent)] hover:underline"
-                    >
-                      Full roadmap
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard?tab=roadmap")}
+                    className="ml-auto text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                  >
+                    Full roadmap
+                  </button>
                 </div>
-                <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
+                <div className="min-h-0 flex-1 space-y-0.5">
                   {semesters.slice(0, 6).map((s) => (
                     <button
                       key={s.semester}
                       type="button"
                       onClick={() => router.push("/dashboard?tab=roadmap")}
-                      className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-all duration-100 hover:bg-[var(--background)]"
+                      className="group flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-[var(--surface-secondary)]"
                     >
                       <div
                         className={`h-2 w-2 shrink-0 rounded-full ${
@@ -582,11 +576,11 @@ export default function DashboardPage() {
                       />
                       <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--foreground)]">{s.semester}</p>
                       {s.status === "current" ? (
-                        <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-[1px] text-[9px] font-semibold uppercase tracking-wide text-white">Now</span>
+                        <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">Now</span>
                       ) : (
                         <span className="shrink-0 text-[10px] font-medium capitalize text-[var(--muted)]">{s.status}</span>
                       )}
-                      <ArrowRight size={13} className="shrink-0 text-[var(--border-hover)] opacity-0 transition-opacity group-hover:opacity-100" />
+                      <ArrowRight size={14} className="shrink-0 text-[var(--muted)] opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
                   ))}
                 </div>
@@ -882,7 +876,7 @@ function PathwayCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-2xl border p-4 ${accent} ${className}`}
+      className={`rounded-2xl border p-4 shadow-[var(--shadow-sm)] ${accent} ${className}`}
     >
       <div className="mb-2 flex items-center gap-2">
         {icon}

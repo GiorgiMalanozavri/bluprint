@@ -3,27 +3,27 @@
 @tailwind utilities;
 
 :root {
-  /* Cool blue foundation */
-  --background: #eef4ff;
-  --background-secondary: #e2ebfa;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --muted-foreground: #475569;
-  --border: #c7d7f0;
-  --border-hover: #94b8e8;
+  /* Warm paper background — blue only via --accent* */
+  --background: #f5f3ee;
+  --background-secondary: #edeae3;
+  --foreground: #1a1a1a;
+  --muted: #8c8c8c;
+  --muted-foreground: #6b6b6b;
+  --border: #e0ddd5;
+  --border-hover: #cbc7bd;
   --accent: #2563eb;
-  --accent-light: #dbeafe;
-  --accent-mid: #bfdbfe;
+  --accent-light: #eff4ff;
+  --accent-mid: #dbeafe;
   --accent-hover: #1d4ed8;
   --surface: #ffffff;
-  --surface-secondary: #f8fafc;
+  --surface-secondary: #faf9f6;
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-card: 0 1px 3px rgba(37, 99, 235, 0.06), 0 4px 14px rgba(37, 99, 235, 0.04);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(37, 99, 235, 0.05);
-  --shadow-lg: 0 12px 40px rgba(30, 64, 175, 0.1), 0 4px 14px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
   --topbar-height: 56px;
   --sidebar-width: 240px;
   --radius: 14px;
@@ -31,26 +31,26 @@
 }
 
 html.dark {
-  --background: #0b1120;
-  --background-secondary: #111c2f;
-  --foreground: #e8eefc;
-  --muted: #94a3b8;
-  --muted-foreground: #a8b8d0;
-  --border: #1e3a5f;
-  --border-hover: #2563a8;
+  --background: #0f0f10;
+  --background-secondary: #1a1a1d;
+  --foreground: #ededef;
+  --muted: #71717a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --border-hover: #3f3f46;
   --accent: #3b82f6;
-  --accent-light: rgba(59, 130, 246, 0.14);
-  --accent-mid: rgba(59, 130, 246, 0.22);
+  --accent-light: rgba(59, 130, 246, 0.12);
+  --accent-mid: rgba(59, 130, 246, 0.18);
   --accent-hover: #60a5fa;
-  --surface: #0f172a;
-  --surface-secondary: #152238;
+  --surface: #18181b;
+  --surface-secondary: #1e1e22;
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(59, 130, 246, 0.06);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 40px rgba(37, 99, 235, 0.08);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 60px rgba(37, 99, 235, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 html { scroll-behavior: smooth; }
