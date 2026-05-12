@@ -36,17 +36,19 @@ export default function SkillTreeView({ semesters, dreamRole }: { semesters: Sem
 
   useEffect(() => { rebuild(); }, [rebuild]);
 
-  // Fit tree on mount
+  // Start zoomed in, centered on the start node
   useEffect(() => {
     if (!tree || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const maxX = Math.max(tree.goalNode.x + 100, ...tree.allNodes.map(n => n.x)) + 80;
-    const maxY = Math.max(...tree.allNodes.map(n => n.y)) + 100;
-    const s = Math.min(rect.width / maxX, rect.height / maxY, 1.2) * 0.85;
-    const contentW = maxX * s;
-    const contentH = maxY * s;
-    setScale(s);
-    setOffset({ x: Math.max(0, (rect.width - contentW) / 2), y: Math.max(10, (rect.height - contentH) / 2) });
+    
+    const initialScale = 1.6; // zoomed in
+    setScale(initialScale);
+    
+    // Position start node at the left side, vertically centered
+    setOffset({
+      x: 120, // 120px from left edge
+      y: rect.height / 2 - (tree.startNode.y * initialScale)
+    });
   }, [tree]);
 
   // Capture ALL wheel events — prevent browser zoom entirely
