@@ -28,6 +28,8 @@ export default function SkillTreeView({ semesters, dreamRole }: { semesters: Sem
   const [hovered, setHovered] = useState<string | null>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   const rebuild = useCallback(() => {
@@ -75,6 +77,19 @@ export default function SkillTreeView({ semesters, dreamRole }: { semesters: Sem
     return () => el.removeEventListener("wheel", handler);
   }, []);
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("[data-node]")) return;
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+  }, [offset]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setOffset({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y });
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => setIsDragging(false), []);
+
   const handleClick = useCallback((node: SkillNode) => {
     if (node.status === "locked" || node.id === "__start__" || node.id === "__goal__") return;
     if (node.status === "completed") { setSelectedNode(node); return; }
@@ -103,7 +118,11 @@ export default function SkillTreeView({ semesters, dreamRole }: { semesters: Sem
       {/* Full-page canvas — no border, no container look */}
       <div ref={containerRef}
         className="absolute inset-0 top-[48px] overflow-hidden"
-        style={{ touchAction: "none", cursor: "grab" }}
+        style={{ touchAction: "none", cursor: isDragging ? "grabbing" : "grab" }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
         <svg width="100%" height="100%" className="block">
           <g transform={`translate(${offset.x},${offset.y}) scale(${scale})`}>
