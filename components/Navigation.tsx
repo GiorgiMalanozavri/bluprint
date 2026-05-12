@@ -137,14 +137,13 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
                 {appNavItems.map((item) => {
                   const active = isNavActive(item);
                   return (
-                    <button
+                    <a
                       key={item.href}
-                      type="button"
-                      onClick={() => router.push(item.href)}
+                      href={item.href}
                       className={`segment-tab ${active ? "segment-tab-active" : ""}`}
                     >
                       <span>{item.label}</span>
-                    </button>
+                    </a>
                   );
                 })}
               </div>
