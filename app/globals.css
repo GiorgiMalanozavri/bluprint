@@ -3,30 +3,54 @@
 @tailwind utilities;
 
 :root {
-  --background: #F5F3EE;
-  --background-secondary: #EDEAE3;
-  --foreground: #1a1a1a;
-  --muted: #8C8C8C;
-  --muted-foreground: #6B6B6B;
-  --border: #E0DDD5;
-  --border-hover: #CBC7BD;
-  --accent: #2563EB;
-  --accent-light: #EFF4FF;
-  --accent-mid: #DBEAFE;
-  --accent-hover: #1D4ED8;
-  --surface: #FFFFFF;
-  --surface-secondary: #FAF9F6;
+  /* Cool blue foundation */
+  --background: #eef4ff;
+  --background-secondary: #e2ebfa;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --muted-foreground: #475569;
+  --border: #c7d7f0;
+  --border-hover: #94b8e8;
+  --accent: #2563eb;
+  --accent-light: #dbeafe;
+  --accent-mid: #bfdbfe;
+  --accent-hover: #1d4ed8;
+  --surface: #ffffff;
+  --surface-secondary: #f8fafc;
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.03);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 1px 3px rgba(37, 99, 235, 0.06), 0 4px 14px rgba(37, 99, 235, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(37, 99, 235, 0.05);
+  --shadow-lg: 0 12px 40px rgba(30, 64, 175, 0.1), 0 4px 14px rgba(15, 23, 42, 0.06);
   --topbar-height: 56px;
   --sidebar-width: 240px;
   --radius: 14px;
   --radius-lg: 20px;
+}
+
+html.dark {
+  --background: #0b1120;
+  --background-secondary: #111c2f;
+  --foreground: #e8eefc;
+  --muted: #94a3b8;
+  --muted-foreground: #a8b8d0;
+  --border: #1e3a5f;
+  --border-hover: #2563a8;
+  --accent: #3b82f6;
+  --accent-light: rgba(59, 130, 246, 0.14);
+  --accent-mid: rgba(59, 130, 246, 0.22);
+  --accent-hover: #60a5fa;
+  --surface: #0f172a;
+  --surface-secondary: #152238;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(59, 130, 246, 0.06);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 40px rgba(37, 99, 235, 0.08);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 60px rgba(37, 99, 235, 0.1);
 }
 
 html { scroll-behavior: smooth; }
@@ -55,7 +79,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 *::selection {
-  background: rgba(37, 99, 235, 0.12);
+  background: var(--accent-light);
 }
 
 /* Scrollbar */
@@ -83,13 +107,13 @@ h1, h2, h3, h4, h5, h6 {
 
   /* Glass effect */
   .glass {
-    @apply rounded-2xl border border-white/50 bg-white/60 backdrop-blur-xl shadow-[var(--shadow-card)];
+    @apply rounded-2xl border border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-xl shadow-[var(--shadow-card)];
   }
 
   /* Focus ring */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    --tw-ring-color: rgba(37, 99, 235, 0.2);
+    --tw-ring-color: rgba(37, 99, 235, 0.35);
     --tw-ring-offset-color: var(--background);
   }
 
@@ -98,7 +122,7 @@ h1, h2, h3, h4, h5, h6 {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium app-transition focus-ring select-none;
   }
   .btn-primary {
-    @apply btn bg-[var(--foreground)] text-white hover:bg-[#333] active:scale-[0.98];
+    @apply btn bg-[var(--accent)] text-white shadow-sm shadow-blue-500/20 hover:bg-[var(--accent-hover)] active:scale-[0.98];
   }
   .btn-secondary {
     @apply btn border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--border-hover)] hover:bg-[var(--surface-secondary)] active:scale-[0.98];
@@ -178,7 +202,7 @@ h1, h2, h3, h4, h5, h6 {
 .segment-tab-active {
   color: var(--foreground);
   background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Responsive: scroll on mobile */

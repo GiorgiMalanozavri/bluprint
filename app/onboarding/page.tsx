@@ -398,15 +398,22 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Progress bar */}
-      <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-[var(--accent)]/10">
-        <div className="h-full bg-[var(--accent)] transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
+    <div className="relative min-h-screen overflow-hidden bg-[var(--background)]">
+      <div className="pointer-events-none fixed inset-0 -z-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(59,130,246,0.18),transparent_55%),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(37,99,235,0.08),transparent_45%),radial-gradient(ellipse_60%_40%_at_0%_80%,rgba(96,165,250,0.1),transparent_50%)]" aria-hidden />
+      <div className="pointer-events-none fixed -right-24 top-1/4 h-72 w-72 rounded-full bg-[var(--accent)]/10 blur-3xl" aria-hidden />
+      <div className="pointer-events-none fixed -left-32 bottom-0 h-96 w-96 rounded-full bg-sky-400/15 blur-3xl" aria-hidden />
+
+      {/* Progress */}
+      <div className="fixed left-0 right-0 top-0 z-50 h-[3px] bg-[var(--accent)]/15">
+        <div
+          className="h-full bg-gradient-to-r from-sky-500 via-[var(--accent)] to-indigo-500 shadow-[0_0_14px_rgba(37,99,235,0.35)] transition-[width] duration-700 ease-out"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       {/* Top nav */}
       {cvStep !== "loading" && !generating && (
-        <div className="max-w-4xl mx-auto flex items-center justify-between pt-8 px-6 animate-fade-up">
+        <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-4 px-6 pt-8 sm:flex-row sm:items-center sm:justify-between animate-fade-up">
           <button
             onClick={() => { if (cvStep === "profile") prevSubStep(); }}
             className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
@@ -416,92 +423,140 @@ export default function OnboardingPage() {
             Back
           </button>
           {cvStep === "profile" ? (
-            <div className="flex items-center gap-1">
+            <div className="flex max-w-full flex-wrap items-center justify-start gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 p-1 shadow-[var(--shadow-sm)] backdrop-blur-md sm:justify-end">
               {subSteps.map((ss, i) => (
-                <button key={ss} onClick={() => setSubStep(ss)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-all ${
-                    ss === subStep ? "bg-[var(--foreground)] text-white"
-                      : i < subStepIndex ? "text-[var(--accent)] hover:bg-[var(--accent-light)]"
-                      : "text-[var(--muted)] hover:bg-[var(--background-secondary)]"
+                <button key={ss} type="button" onClick={() => setSubStep(ss)}
+                  className={`rounded-xl px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                    ss === subStep
+                      ? "bg-[var(--accent)] text-white shadow-md shadow-blue-500/25"
+                      : i < subStepIndex
+                        ? "text-[var(--accent)] hover:bg-[var(--accent-light)]"
+                        : "text-[var(--muted)] hover:bg-[var(--background-secondary)]"
                   }`}>{subStepLabels[ss]}</button>
               ))}
             </div>
           ) : (
-            <p className="font-mono text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">Getting started</p>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)]/80 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] shadow-[var(--shadow-sm)] backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" /> Getting started
+            </span>
           )}
         </div>
       )}
 
       {/* ─── CV Upload ─── */}
       {cvStep === "upload" && (
-        <section className="flex min-h-screen items-center justify-center px-4 animate-fade-up">
-          <div className="w-full max-w-2xl text-center">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-light)] text-[var(--accent)] mb-8">
-              <Upload size={24} />
+        <section className="relative z-10 flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-16 animate-fade-up">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full max-w-xl text-center"
+          >
+            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)]/90 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] shadow-[var(--shadow-sm)] backdrop-blur-sm">
+              <Sparkles size={12} className="text-[var(--accent)]" /> Step 1 &middot; Your CV
+            </p>
+            <div className="mx-auto mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--accent-light)] to-[var(--accent-mid)] text-[var(--accent)] shadow-[var(--shadow-md)] ring-1 ring-[var(--accent)]/20">
+              <Upload size={26} />
             </div>
-            <h1 className="text-[2.5rem] font-semibold tracking-tight">Let&apos;s build your roadmap.</h1>
-            <p className="mt-4 text-lg text-[var(--muted)]">Upload your CV and bluprint will generate your career plan in seconds.</p>
+            <h1 className="text-balance text-[2.25rem] font-semibold tracking-tight sm:text-[2.5rem]">
+              Let&apos;s build your roadmap
+            </h1>
+            <p className="mx-auto mt-4 max-w-md text-pretty text-base leading-relaxed text-[var(--muted)]">
+              Upload your CV and we&apos;ll extract your profile so you spend less time typing and more time planning.
+            </p>
 
-            <label className="mt-10 block cursor-pointer rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--surface)] p-12 transition-all hover:border-[var(--accent)] hover:shadow-md group">
-              {selectedFile ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="rounded-full bg-emerald-50 p-3 text-emerald-600"><Check size={24} /></div>
-                  <p className="font-semibold">{selectedFile.name}</p>
-                  <p className="text-xs text-[var(--muted)]">{Math.round(selectedFile.size / 1024)} KB</p>
-                  <span className="text-xs font-medium text-[var(--accent)] underline mt-2">Change file</span>
+            <label className="group mt-10 block cursor-pointer">
+              <div className="surface-card relative overflow-hidden rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--surface)]/95 p-10 transition-all duration-300 hover:border-[var(--accent)]/50 hover:shadow-[var(--shadow-md)] sm:p-12">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent-light)]/40 via-transparent to-sky-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="relative">
+                  {selectedFile ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-emerald-500/10 p-3 text-emerald-600 ring-1 ring-emerald-500/20">
+                        <Check size={24} />
+                      </div>
+                      <p className="font-semibold text-[var(--foreground)]">{selectedFile.name}</p>
+                      <p className="text-xs text-[var(--muted)]">{Math.round(selectedFile.size / 1024)} KB</p>
+                      <span className="mt-1 text-xs font-semibold text-[var(--accent)] underline decoration-[var(--accent)]/30 underline-offset-4">
+                        Change file
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      <div className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--muted)] shadow-inner transition-all duration-300 group-hover:border-[var(--accent)]/30 group-hover:bg-[var(--accent-light)] group-hover:text-[var(--accent)]">
+                        <Upload size={28} />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold sm:text-xl">Drop your CV here</p>
+                        <p className="mt-1.5 text-sm text-[var(--muted)]">PDF or Word &middot; Max ~10MB typical</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--background-secondary)] text-[var(--muted)] group-hover:bg-[var(--accent-light)] group-hover:text-[var(--accent)] transition-colors">
-                    <Upload size={28} />
-                  </div>
-                  <div><p className="text-xl font-semibold">Drop your CV here</p><p className="text-sm text-[var(--muted)] mt-1">PDF or Word document</p></div>
-                </div>
-              )}
+              </div>
               <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)} />
             </label>
 
             <button onClick={handleAnalyzeCV} disabled={!selectedFile || loading}
-              className="mt-10 btn-primary h-12 px-12 text-[15px] w-full sm:w-auto">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Analyze my background"}
+              className="mt-8 btn-primary h-12 min-w-[200px] px-10 text-[15px] disabled:opacity-50">
+              {loading ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : "Analyze my background"}
             </button>
 
-            {error && <p className="mt-4 text-sm font-medium text-red-500">{error}</p>}
+            {error && <p className="mt-4 text-sm font-medium text-red-600">{error}</p>}
 
-            <div className="mt-12 flex flex-col items-center gap-6 text-[10px] font-medium uppercase tracking-wider text-[var(--muted)] sm:flex-row sm:justify-center">
-              <span className="flex items-center gap-2"><Check size={12} className="text-[var(--accent)]" /> Encrypted Data</span>
-              <span className="flex items-center gap-2"><Check size={12} className="text-[var(--accent)]" /> Real-time AI</span>
-              <span className="flex items-center gap-2"><Check size={12} className="text-[var(--accent)]" /> Direct Roadmap</span>
-            </div>
+            <ul className="mx-auto mt-12 flex max-w-md flex-col gap-3 text-left text-xs text-[var(--muted)] sm:flex-row sm:justify-center sm:text-center">
+              {[
+                "Encrypted in transit",
+                "AI-assisted extraction",
+                "Edit everything after",
+              ].map(text => (
+                <li key={text} className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)]/80 bg-[var(--surface)]/60 px-3 py-2 backdrop-blur-sm sm:flex-1">
+                  <Check size={12} className="shrink-0 text-[var(--accent)]" /> {text}
+                </li>
+              ))}
+            </ul>
 
-            <button onClick={() => { setCvStep("profile"); setSubStep("academic"); }}
-              className="mt-12 text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] underline underline-offset-4 transition-colors">
+            <button type="button" onClick={() => { setCvStep("profile"); setSubStep("academic"); }}
+              className="mt-10 text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent)] underline underline-offset-4">
               I don&apos;t have a CV yet &middot; Start manually
             </button>
-          </div>
+          </motion.div>
         </section>
       )}
 
       {/* ─── Loading screens ─── */}
       {(cvStep === "loading" || generating) && (
-        <section className="flex min-h-screen items-center justify-center px-4">
-          <div className="text-center">
+        <section className="relative z-10 flex min-h-screen items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="surface-card max-w-md px-10 py-12 text-center shadow-[var(--shadow-lg)]"
+          >
             <div className="flex items-center justify-center gap-3">
               {[0, 1, 2].map(dot => (
                 <motion.span key={dot}
-                  animate={{ scale: loadingIndex % 3 === dot ? 1.2 : 0.8, opacity: loadingIndex % 3 === dot ? 1 : 0.3 }}
-                  className="h-3 w-3 rounded-full bg-[var(--accent)]" />
+                  animate={{ scale: loadingIndex % 3 === dot ? 1.25 : 0.85, opacity: loadingIndex % 3 === dot ? 1 : 0.28 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 24 }}
+                  className="h-3 w-3 rounded-full bg-gradient-to-br from-sky-400 to-[var(--accent)] shadow-sm shadow-blue-500/30" />
               ))}
             </div>
-            <p className="mt-8 text-lg font-semibold animate-pulse">{currentMessages[loadingIndex]}</p>
-            {error && <p className="mt-4 text-sm font-medium text-red-500">{error}</p>}
-          </div>
+            <p className="mt-8 text-lg font-semibold text-[var(--foreground)]">{currentMessages[loadingIndex]}</p>
+            <p className="mt-2 text-xs text-[var(--muted)]">This usually takes a few seconds.</p>
+            {error && <p className="mt-4 text-sm font-medium text-red-600">{error}</p>}
+          </motion.div>
         </section>
       )}
 
       {/* ─── Profile Builder ─── */}
       {cvStep === "profile" && !generating && (
-        <section className="max-w-2xl mx-auto pb-40 pt-10 px-6 animate-fade-up" key={subStep}>
+        <section className="relative z-10 mx-auto max-w-2xl px-6 pb-40 pt-10">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={subStep}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
 
           {/* ── Academic ── */}
           {subStep === "academic" && (
@@ -583,9 +638,11 @@ export default function OnboardingPage() {
                         <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)] mb-3 block">Visa status</label>
                         <div className="flex flex-wrap gap-2">
                           {["F-1", "J-1", "H-1B", "OPT", "CPT", "Other", "Not sure"].map(opt => (
-                            <button key={opt} onClick={() => setProfile({ ...profile, visaStatus: opt })}
+                            <button key={opt} type="button" onClick={() => setProfile({ ...profile, visaStatus: opt })}
                               className={`rounded-xl px-4 py-2.5 text-xs font-medium transition-all ${
-                                profile.visaStatus === opt ? "bg-[var(--foreground)] text-white" : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)]"
+                                profile.visaStatus === opt
+                                  ? "bg-[var(--accent)] text-white shadow-md shadow-blue-500/20"
+                                  : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]/40 hover:text-[var(--foreground)]"
                               }`}>{opt}</button>
                           ))}
                         </div>
@@ -642,7 +699,7 @@ export default function OnboardingPage() {
                     <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">
                       Dream role <span className="text-red-400">*</span>
                     </label>
-                    <input className="w-full h-11 rounded-xl border border-[var(--border)] bg-transparent px-4 text-sm outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/10"
+                    <input className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15"
                       value={profile.dreamRole}
                       onChange={e => setProfile({ ...profile, dreamRole: e.target.value })}
                       placeholder="e.g. Software Engineer, Investment Banker..." />
@@ -723,7 +780,7 @@ export default function OnboardingPage() {
           {subStep === "review" && (
             <>
               <SectionHeader icon={<Check size={20} />} title="Review your profile"
-                subtitle="Everything look good? We'll generate your personalized career roadmap." />
+                subtitle="Everything look good? We&apos;ll generate your personalized career roadmap." />
 
               {error && <p className="mb-6 rounded-xl bg-red-50 border border-red-100 p-4 text-sm font-medium text-red-600">{error}</p>}
 
@@ -762,21 +819,23 @@ export default function OnboardingPage() {
                 )}
               </div>
 
-              <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-xl z-40">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 py-5 px-6">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold">Ready to proceed?</span>
-                    <p className="text-xs text-[var(--muted)]">We&apos;ll generate your roadmap based on these details.</p>
+              <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/90 shadow-[0_-8px_30px_rgba(37,99,235,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--surface)]/75">
+                <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-6 px-6 py-5 sm:flex-row">
+                  <div className="flex flex-col text-center sm:text-left">
+                    <span className="text-sm font-semibold text-[var(--foreground)]">Ready to proceed?</span>
+                    <p className="text-xs text-[var(--muted)]">We&apos;ll generate your roadmap from these details.</p>
                   </div>
-                  <button onClick={handleBuildRoadmap}
+                  <button type="button" onClick={handleBuildRoadmap}
                     disabled={!mandatoryValid || !careerValid || loading}
-                    className="btn-primary h-12 px-10 text-[15px] w-full sm:w-auto flex items-center gap-2">
+                    className="btn-primary flex h-12 w-full items-center justify-center gap-2 px-10 text-[15px] sm:w-auto disabled:opacity-45">
                     <Sparkles size={16} /> Generate my roadmap
                   </button>
                 </div>
               </div>
             </>
           )}
+            </motion.div>
+          </AnimatePresence>
         </section>
       )}
     </div>
@@ -823,7 +882,7 @@ function CourseScheduleStep({ profile, setProfile, onContinue }: {
   return (
     <>
       <SectionHeader icon={<BookOpen size={20} />} title="Course schedule"
-        subtitle="Paste your 4-year sample plan from your university website. Check off what you've completed." />
+        subtitle="Paste your 4-year sample plan from your university website. Check off what you&apos;ve completed." />
 
       {!isParsed ? (
         <div className="space-y-6">
@@ -905,9 +964,11 @@ function CourseScheduleStep({ profile, setProfile, onContinue }: {
 function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
   return (
     <header className="mb-10">
-      <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-light)] text-[var(--accent)] mb-4">{icon}</div>
-      <h1 className="text-[2rem] font-semibold tracking-tight">{title}</h1>
-      <p className="mt-2 text-[var(--muted)]">{subtitle}</p>
+      <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--accent-light)] to-[var(--accent-mid)]/80 text-[var(--accent)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--accent)]/15">
+        {icon}
+      </div>
+      <h1 className="text-[1.85rem] font-semibold tracking-tight sm:text-[2rem]">{title}</h1>
+      <p className="mt-3 max-w-lg text-pretty text-[15px] leading-relaxed text-[var(--muted)]">{subtitle}</p>
     </header>
   );
 }
@@ -920,7 +981,7 @@ function FormField({ label, required, value, onChange, placeholder }: {
       <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">
         {label} {required && <span className="text-red-400">*</span>}
       </label>
-      <input className="w-full h-11 rounded-xl border border-[var(--border)] bg-transparent px-4 text-sm outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/10"
+      <input className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15"
         value={value || ""} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   );
@@ -936,9 +997,11 @@ function ToggleRow({ label, required, options, value, onChange }: {
       </label>
       <div className="flex gap-2">
         {options.map(opt => (
-          <button key={opt} onClick={() => onChange(opt)}
-            className={`flex-1 rounded-xl py-2.5 text-xs font-medium transition-all ${
-              value === opt ? "bg-[var(--foreground)] text-white shadow-md" : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)]"
+          <button key={opt} type="button" onClick={() => onChange(opt)}
+            className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all ${
+              value === opt
+                ? "bg-[var(--accent)] text-white shadow-md shadow-blue-500/20"
+                : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]/35 hover:text-[var(--foreground)]"
             }`}>{opt}</button>
         ))}
       </div>
@@ -1062,11 +1125,11 @@ function BottomBar({ canContinue, onContinue, hint, label }: {
   canContinue: boolean; onContinue: () => void; hint?: string; label?: string;
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-xl z-40">
-      <div className="max-w-4xl mx-auto flex items-center justify-between py-5 px-6">
-        {hint ? <p className="text-xs text-[var(--muted)]">{hint}</p> : <div />}
-        <button onClick={onContinue} disabled={!canContinue}
-          className="btn-primary h-11 px-8 text-sm flex items-center gap-2">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/90 shadow-[0_-8px_30px_rgba(37,99,235,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--surface)]/75">
+      <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-5">
+        {hint ? <p className="max-w-[55%] text-xs leading-relaxed text-[var(--muted)]">{hint}</p> : <div />}
+        <button type="button" onClick={onContinue} disabled={!canContinue}
+          className="btn-primary ml-auto flex h-11 shrink-0 items-center gap-2 px-8 text-sm disabled:opacity-45">
           {label || "Continue"} <ChevronRight size={14} />
         </button>
       </div>

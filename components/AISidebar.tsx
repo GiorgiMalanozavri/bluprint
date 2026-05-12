@@ -34,8 +34,9 @@ const SUGGESTIONS: Record<string, { label: string; msg: string }[]> = {
     { label: "What matters most?", msg: "Which of my monthly tasks will have the biggest impact?" },
   ],
   overview: [
-    { label: "Weekly summary", msg: "Give me a summary of what I should focus on this week." },
-    { label: "Quick wins", msg: "What are some quick wins I can knock out today?" },
+    { label: "Warm intro help", msg: "Help me polish a short LinkedIn DM to ask an alum for a 10-minute coffee chat." },
+    { label: "Today's micro-skill", msg: "What's one 15-minute skill I can learn today that matches my dream role?" },
+    { label: "Weekly sync", msg: "What should my Friday portfolio push be this week based on my profile?" },
   ],
   default: [
     { label: "Review my plan", msg: "Review my roadmap and give me feedback." },

@@ -30,6 +30,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="en" className={`${inter.variable} ${dmMono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            const t = localStorage.getItem('bluprint_theme');
+            const dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (dark) document.documentElement.classList.add('dark');
+          } catch {}
+        `}} />
+      </head>
       <body className="antialiased bg-[var(--background)] text-[var(--foreground)]">
         <Providers>
           <Navigation initialUser={user} />

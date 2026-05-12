@@ -5,10 +5,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Bell, ChevronDown, Loader2, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Bell, ChevronDown, Loader2, LogOut, Moon, Settings, Sun, User as UserIcon } from "lucide-react";
 import { signout } from "@/actions/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import BrandWordmark from "./BrandWordmark";
+import { useTheme } from "@/lib/theme";
 
 const appNavItems = [
   { href: "/dashboard",               label: "Overview",   tab: "overview" },
@@ -27,6 +28,7 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notiOpen, setNotiOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const { theme, setTheme, resolved } = useTheme();
   const dropRef = useRef<HTMLDivElement>(null);
   const notiRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +136,15 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
           {/* Right actions */}
           <div className="flex items-center gap-2">
             {isApp && user && (
+              <button
+                onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
+                className="grid h-8 w-8 place-items-center rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-secondary)] transition-all duration-150"
+                title={`Theme: ${theme}`}
+              >
+                {resolved === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            )}
+            {isApp && user && (
               <div className="relative" ref={notiRef}>
                 <button onClick={() => setNotiOpen((o) => !o)}
                   className="grid h-8 w-8 place-items-center rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-secondary)] transition-all duration-150">
@@ -192,7 +203,7 @@ export default function Navigation({ initialUser }: { initialUser?: User | null 
                       </Link>
                       <div className="my-1 h-px bg-[var(--border)]" />
                       <button onClick={handleSignOut}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                         <LogOut size={14} /> Sign out
                       </button>
                     </motion.div>
