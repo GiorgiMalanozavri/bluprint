@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, LayoutDashboard, Map, Settings } from "lucide-react";
 
 const navItems = [
@@ -13,6 +12,7 @@ const navItems = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "overview";
 
@@ -37,16 +37,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {navItems.map((item) => {
             const active = isActive(item);
             return (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
+                type="button"
+                onClick={() => router.push(item.href)}
                 className={`flex flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium transition-colors duration-100 ${
                   active ? "text-[var(--accent)] bg-[var(--accent-light)]" : "text-[var(--muted)]"
                 }`}
               >
                 <item.icon size={20} />
                 {item.label}
-              </Link>
+              </button>
             );
           })}
         </div>

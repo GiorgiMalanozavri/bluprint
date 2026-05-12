@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Maximize2 } from "lucide-react";
 import { useState } from "react";
 import { archetypeFor, getArcState, roleLabel, type Phase, PHASE_LABELS } from "@/lib/arc";
+import TimelineModal from "@/components/dashboard/TimelineModal";
 
 const PHASES: Phase[] = ["freshman", "sophomore", "junior", "senior"];
 
@@ -10,6 +12,7 @@ export default function Arc({ profile }: { profile: any | null | undefined }) {
   const arc = getArcState(profile);
   const role = roleLabel(profile);
   const [selected, setSelected] = useState<Phase>(arc.phase === "grad" ? "senior" : arc.phase);
+  const [expanded, setExpanded] = useState(false);
 
   const currentIdx = PHASES.indexOf(arc.phase === "grad" ? "senior" : arc.phase);
 
@@ -17,9 +20,20 @@ export default function Arc({ profile }: { profile: any | null | undefined }) {
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-card)]">
       <div className="mb-5 flex items-baseline justify-between">
         <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">Your timeline</p>
-        <p className="text-[11px] text-[var(--muted)]">
-          Semester {arc.semesterNumber} of {arc.totalSemesters}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-[11px] text-[var(--muted)]">
+            Semester {arc.semesterNumber} of {arc.totalSemesters}
+          </p>
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:bg-[var(--background-secondary)] hover:text-[var(--foreground)]"
+            title="Expand timeline"
+            aria-label="Expand timeline"
+          >
+            <Maximize2 size={13} />
+          </button>
+        </div>
       </div>
 
       {/* Horizontal progression — minimal */}
@@ -87,6 +101,8 @@ export default function Arc({ profile }: { profile: any | null | undefined }) {
           </p>
         )}
       </motion.div>
+
+      <TimelineModal profile={profile} open={expanded} onClose={() => setExpanded(false)} />
     </section>
   );
 }

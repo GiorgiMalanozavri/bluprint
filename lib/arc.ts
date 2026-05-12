@@ -343,6 +343,102 @@ export function archetypeFor(profile: any | null | undefined, phase: Phase): str
   return BENCHMARKS[role].byPhase[phase]?.archetype ?? "";
 }
 
+/* ─── Multi-zoom timeline layout ─────────────────── */
+
+export type SemesterSlot = {
+  index: number; // 1..8
+  phase: Phase;
+  label: string; // "Fall 2025"
+  year: number;
+  term: "Fall" | "Spring";
+  status: "past" | "current" | "future";
+};
+
+export type WeekSlot = {
+  index: number; // 1..15
+  label: string; // "Week 1"
+  status: "past" | "current" | "future";
+};
+
+/** Build all 8 undergrad semester slots from the profile's graduation date. */
+export function getSemesterTimeline(profile: any | null | undefined): SemesterSlot[] {
+  const arc = getArcState(profile);
+  const graduating: string = (profile?.graduating || "").trim();
+  // Try to parse graduating string for end year+term
+  const gradMatch = graduating.match(/(May|December|Dec)\s*(\d{4})/i);
+  const gradYear = gradMatch ? parseInt(gradMatch[2], 10) : new Date().getFullYear() + 2;
+  const gradTerm: "Fall" | "Spring" = gradMatch && /dec/i.test(gradMatch[1]) ? "Fall" : "Spring";
+
+  // Walk backward 8 semesters from graduation
+  const slots: SemesterSlot[] = [];
+  let year = gradYear;
+  let term: "Fall" | "Spring" = gradTerm;
+  const phases: Phase[] = ["senior", "senior", "junior", "junior", "sophomore", "sophomore", "freshman", "freshman"];
+  for (let i = 0; i < 8; i++) {
+    slots.unshift({
+      index: 8 - i,
+      phase: phases[i],
+      label: `${term} ${year}`,
+      year,
+      term,
+      status: "future",
+    });
+    // step backward
+    if (term === "Spring") {
+      term = "Fall";
+      year = year - 1;
+    } else {
+      term = "Spring";
+    }
+  }
+
+  // Mark current/past based on semesterNumber
+  for (const s of slots) {
+    if (s.index < arc.semesterNumber) s.status = "past";
+    else if (s.index === arc.semesterNumber) s.status = "current";
+    else s.status = "future";
+  }
+  return slots;
+}
+
+/** Roughly 15 weeks per semester. Mark current/past based on month of the year. */
+export function getCurrentSemesterWeeks(): WeekSlot[] {
+  const now = new Date();
+  const m = now.getMonth(); // 0..11
+  // Spring runs Jan..May (months 0..4) → ~Jan 15 start. Fall runs Aug..Dec (months 7..11).
+  const inSpring = m >= 0 && m <= 5;
+  const startMonth = inSpring ? 0 : 7;
+  const startDay = 15; // approximate
+  const semStart = new Date(now.getFullYear(), startMonth, startDay);
+  const elapsedMs = now.getTime() - semStart.getTime();
+  const elapsedWeeks = Math.max(0, Math.floor(elapsedMs / (7 * 86400000)));
+  const total = 15;
+  const slots: WeekSlot[] = [];
+  for (let i = 1; i <= total; i++) {
+    const status: WeekSlot["status"] =
+      i < elapsedWeeks + 1 ? "past" : i === elapsedWeeks + 1 ? "current" : "future";
+    slots.push({ index: i, label: `Wk ${i}`, status });
+  }
+  return slots;
+}
+
+/** Months covered by the current semester, with current month flagged. */
+export function getCurrentSemesterMonths(): { label: string; status: "past" | "current" | "future" }[] {
+  const now = new Date();
+  const m = now.getMonth();
+  const inSpring = m >= 0 && m <= 5;
+  const months = inSpring
+    ? ["January", "February", "March", "April", "May"]
+    : ["August", "September", "October", "November", "December"];
+  const startMonth = inSpring ? 0 : 7;
+  return months.map((name, i) => {
+    const monthIdx = startMonth + i;
+    const status: "past" | "current" | "future" =
+      monthIdx < m ? "past" : monthIdx === m ? "current" : "future";
+    return { label: name, status };
+  });
+}
+
 export function roleLabel(profile: any | null | undefined): string {
   const role = detectRole(profile);
   const map: Record<RoleKey, string> = {
