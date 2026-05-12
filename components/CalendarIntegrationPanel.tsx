@@ -21,7 +21,34 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
       if (data.connected) {
         setGcalStatus("connected");
         const existingIds = new Set(entries.map((e) => e.id));
-        const newEvents = (data.events as PlannerEntry[]).filter((e) => !existingIds.has(e.id));
+        const mappedEvents: PlannerEntry[] = (data.events as any[]).map((item: any) => {
+          const allDay = !!item.start.date;
+          const startDate = allDay ? new Date(item.start.date + "T00:00:00") : new Date(item.start.dateTime);
+          const endDate   = allDay ? new Date(item.end.date + "T00:00:00")   : new Date(item.end.dateTime);
+          const startH = allDay ? -1 : startDate.getHours() + startDate.getMinutes() / 60;
+          const endH   = allDay ? -1 : endDate.getHours()   + endDate.getMinutes()   / 60;
+          
+          const y = startDate.getFullYear();
+          const m = String(startDate.getMonth() + 1).padStart(2, '0');
+          const d = String(startDate.getDate()).padStart(2, '0');
+          const isoDate = `${y}-${m}-${d}`;
+
+          return {
+            id:       `gcal_${item.id}`,
+            title:    item.summary ?? "(No title)",
+            date:     isoDate,
+            start:    allDay ? -1 : Math.round(startH * 2) / 2,
+            end:      allDay ? -1 : Math.round(endH * 2) / 2,
+            type:     "Class",
+            location: item.location ?? "",
+            notes:    item.description ?? "",
+            allDay,
+            repeat:   "none",
+            alert:    "none",
+            gcalId:   item.id,
+          };
+        });
+        const newEvents = mappedEvents.filter((e) => !existingIds.has(e.id));
         if (newEvents.length) {
           setEntries([...entries, ...newEvents]);
           setSyncCount(newEvents.length);
@@ -46,10 +73,21 @@ export function CalendarIntegrationPanel({ entries, setEntries }: Props) {
     for (const entry of entries) {
       if ((entry as any).gcalId || entry.id.startsWith("gcal_")) continue;
       try {
+        const targetDate = new Date(entry.date + "T00:00:00");
+        const startDt = new Date(targetDate);
+        startDt.setHours(Math.floor(entry.start), (entry.start % 1) >= 0.5 ? 30 : 0, 0, 0);
+        const endDt = new Date(targetDate);
+        endDt.setHours(Math.floor(entry.end), (entry.end % 1) >= 0.5 ? 30 : 0, 0, 0);
+
         await fetch("/api/calendar/google/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(entry),
+          body: JSON.stringify({
+            ...entry,
+            clientStartTime: startDt.toISOString(),
+            clientEndTime: endDt.toISOString(),
+            clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
         });
         synced++;
       } catch { /* skip failed */ }

@@ -57,34 +57,7 @@ export async function GET(request: NextRequest) {
   if (!gcalRes.ok) return NextResponse.json({ connected: false, events: [] });
   const data = await gcalRes.json();
 
-  // Map to PlannerEntry format with ISO date
-  const events = (data.items ?? [])
-    .filter((item: any) => item.status !== "cancelled")
-    .map((item: any) => {
-      const allDay = !!item.start.date;
-      const startDate = allDay ? new Date(item.start.date) : new Date(item.start.dateTime);
-      const endDate   = allDay ? new Date(item.end.date)   : new Date(item.end.dateTime);
-      const startH = allDay ? -1 : startDate.getHours() + startDate.getMinutes() / 60;
-      const endH   = allDay ? -1 : endDate.getHours()   + endDate.getMinutes()   / 60;
-
-      // ISO date format YYYY-MM-DD
-      const isoDate = startDate.toISOString().slice(0, 10);
-
-      return {
-        id:       `gcal_${item.id}`,
-        title:    item.summary ?? "(No title)",
-        date:     isoDate,
-        start:    allDay ? -1 : Math.round(startH * 2) / 2,
-        end:      allDay ? -1 : Math.round(endH * 2) / 2,
-        type:     "Class" as const,
-        location: item.location ?? "",
-        notes:    item.description ?? "",
-        allDay,
-        repeat:   "none" as const,
-        alert:    "none" as const,
-        gcalId:   item.id,
-      };
-    });
+  const events = (data.items ?? []).filter((item: any) => item.status !== "cancelled");
 
   return NextResponse.json({ connected: true, events });
 }
@@ -113,18 +86,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(await res.json(), { status: res.status });
   }
 
-  const startDt = new Date(targetDate);
-  startDt.setHours(Math.floor(entry.start), (entry.start % 1) >= 0.5 ? 30 : 0, 0, 0);
-  const endDt = new Date(targetDate);
-  endDt.setHours(Math.floor(entry.end), (entry.end % 1) >= 0.5 ? 30 : 0, 0, 0);
-
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const body = {
     summary: entry.title || "New Event",
     location: entry.location,
     description: entry.notes,
-    start: { dateTime: startDt.toISOString(), timeZone: tz },
-    end:   { dateTime: endDt.toISOString(),   timeZone: tz },
+    start: { dateTime: entry.clientStartTime, timeZone: entry.clientTimeZone },
+    end:   { dateTime: entry.clientEndTime,   timeZone: entry.clientTimeZone },
   };
 
   const res = await fetch(
