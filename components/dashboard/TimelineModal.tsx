@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Lock, X } from "lucide-react";
+import { Check, Flag, Lock, X } from "lucide-react";
 import { useEffect } from "react";
 import {
   archetypeFor,
@@ -48,6 +48,8 @@ export default function TimelineModal({
 
   const phases = ["freshman", "sophomore", "junior", "senior"] as const;
   const currentPhaseIdx = phases.indexOf(arc.phase === "grad" ? "senior" : arc.phase);
+  const currentSemIdx = semesters.findIndex((s) => s.status === "current");
+  const progressPercent = currentSemIdx >= 0 ? (currentSemIdx / (semesters.length - 1)) * 100 : 0;
 
   return (
     <AnimatePresence>
@@ -58,57 +60,101 @@ export default function TimelineModal({
         transition={{ duration: 0.2 }}
         className="fixed inset-0 z-[80] flex flex-col bg-[var(--background)]/95 backdrop-blur-xl"
       >
-        {/* Top bar — always visible, sits above all scroll */}
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)]/80 px-5 py-3.5 backdrop-blur-xl sm:px-8">
-          <div className="flex items-baseline gap-2.5">
-            <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Your timeline</h2>
+        {/* Top bar */}
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)]/80 px-6 py-4 backdrop-blur-xl sm:px-10">
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-[16px] font-semibold tracking-tight text-[var(--foreground)]">Your timeline</h2>
             <span className="text-[12px] text-[var(--muted)]">{role}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--background-secondary)] hover:text-[var(--foreground)]"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--background-secondary)] hover:text-[var(--foreground)]"
             aria-label="Close timeline"
           >
-            <X size={17} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Scrollable body */}
+        {/* Scrollable body — full width, edge to edge */}
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
-            {/* Header text */}
-            <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
-              4 year path
-            </p>
-            <h3 className="mt-1.5 text-[24px] font-semibold tracking-tight text-[var(--foreground)] sm:text-[28px]">
-              {arc.semesterLabel} · {PHASE_LABELS[arc.phase === "grad" ? "senior" : arc.phase]} year
-            </h3>
-            <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-[var(--muted-foreground)]">
-              {arc.blurb}
-            </p>
-
-            {/* PHASES — the level map */}
-            <div className="mt-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-              <p className="mb-5 text-[10.5px] font-medium uppercase tracking-wider text-[var(--muted)]">
-                Phases
+          <div className="w-full px-6 py-10 sm:px-10 sm:py-12 lg:px-16">
+            {/* Hero — current state */}
+            <div className="mb-12">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                {arc.semesterLabel}
               </p>
-              <div className="relative">
-                <div className="absolute left-[6%] right-[6%] top-[19px] h-[2px]" aria-hidden>
-                  <div className="h-full w-full rounded-full bg-[var(--border)]" />
-                  <div
-                    className="absolute left-0 top-0 h-full rounded-full bg-[var(--foreground)] transition-all"
-                    style={{ width: `${(currentPhaseIdx / (phases.length - 1)) * 100}%` }}
-                  />
-                </div>
-                <div className="relative grid grid-cols-4 gap-3">
-                  {phases.map((p, idx) => {
-                    const isCurrent = idx === currentPhaseIdx;
-                    const isDone = idx < currentPhaseIdx;
+              <h3 className="mt-1.5 text-[32px] font-semibold tracking-tight text-[var(--foreground)] sm:text-[40px]">
+                {PHASE_LABELS[arc.phase === "grad" ? "senior" : arc.phase]} year · Semester {arc.semesterNumber} of 8
+              </h3>
+              <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-[var(--muted-foreground)]">
+                {arc.blurb}
+              </p>
+            </div>
+
+            {/* ─── Big semester timeline — full width, edge to edge ─── */}
+            <section className="mb-14">
+              <p className="mb-6 text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                8 semesters
+              </p>
+
+              {/* Phase bands underlay */}
+              <div className="mb-5 grid grid-cols-4 gap-2">
+                {phases.map((p, idx) => {
+                  const isCurrent = idx === currentPhaseIdx;
+                  const isDone = idx < currentPhaseIdx;
+                  return (
+                    <div
+                      key={p}
+                      className={`rounded-lg border px-3 py-2 text-center text-[12px] font-medium ${
+                        isDone
+                          ? "border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)]"
+                          : isCurrent
+                          ? "border-[var(--foreground)] bg-[var(--surface)] text-[var(--foreground)]"
+                          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
+                      }`}
+                    >
+                      {PHASE_LABELS[p]}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* The road */}
+              <div className="relative py-8">
+                {/* Track */}
+                <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--border)]" aria-hidden />
+                <motion.div
+                  className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--foreground)]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+                  aria-hidden
+                />
+
+                {/* Nodes spread evenly across full width */}
+                <div className="relative grid grid-cols-8 gap-0">
+                  {semesters.map((s) => {
+                    const isCurrent = s.status === "current";
+                    const isDone = s.status === "past";
                     return (
-                      <div key={p} className="flex flex-col items-center text-center">
+                      <div key={s.index} className="relative flex flex-col items-center">
+                        {/* Label above */}
+                        <p
+                          className={`absolute bottom-full mb-3 whitespace-nowrap text-[11.5px] font-semibold ${
+                            isCurrent
+                              ? "text-[var(--foreground)]"
+                              : isDone
+                              ? "text-[var(--foreground)]"
+                              : "text-[var(--muted)]"
+                          }`}
+                        >
+                          {s.label}
+                        </p>
+
+                        {/* Node */}
                         <div
-                          className={`relative z-10 mb-2.5 flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] transition-colors ${
+                          className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-[3px] transition-colors ${
                             isDone
                               ? "border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)]"
                               : isCurrent
@@ -117,84 +163,50 @@ export default function TimelineModal({
                           }`}
                         >
                           {isDone ? (
-                            <Check size={16} strokeWidth={3} />
+                            <Check size={18} strokeWidth={3} />
                           ) : isCurrent ? (
-                            <span className="h-2.5 w-2.5 rounded-full bg-[var(--foreground)]" />
+                            <Flag size={16} strokeWidth={2.5} />
                           ) : (
-                            <Lock size={13} />
+                            <Lock size={14} />
+                          )}
+                          {isCurrent && (
+                            <motion.div
+                              className="absolute inset-0 rounded-full border-[3px] border-[var(--foreground)]"
+                              initial={{ scale: 1, opacity: 0.5 }}
+                              animate={{ scale: 1.6, opacity: 0 }}
+                              transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+                              aria-hidden
+                            />
                           )}
                         </div>
-                        <p className="text-[12.5px] font-medium leading-tight text-[var(--foreground)]">
-                          {PHASE_LABELS[p]}
-                        </p>
-                        <p className="mt-0.5 text-[10.5px] text-[var(--muted)]">
-                          {isDone ? "complete" : isCurrent ? "you are here" : "ahead"}
+
+                        {/* Caption below */}
+                        <p
+                          className={`absolute top-full mt-3 text-[10.5px] capitalize ${
+                            isCurrent ? "font-medium text-[var(--foreground)]" : "text-[var(--muted)]"
+                          }`}
+                        >
+                          {isCurrent ? "you are here" : isDone ? "done" : "ahead"}
                         </p>
                       </div>
                     );
                   })}
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* SEMESTERS — horizontal scrolling track */}
-            <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-              <p className="mb-5 text-[10.5px] font-medium uppercase tracking-wider text-[var(--muted)]">
-                Semesters
-              </p>
-              <div className="-mx-2 overflow-x-auto pb-2">
-                <div className="flex min-w-fit items-center gap-1 px-2">
-                  {semesters.map((s, idx) => (
-                    <div key={s.index} className="flex shrink-0 items-center">
-                      <div
-                        className={`flex w-[120px] flex-col items-center rounded-xl border px-3 py-3 text-center ${
-                          s.status === "current"
-                            ? "border-[var(--foreground)] bg-[var(--surface)] shadow-md ring-2 ring-[var(--border)] ring-offset-2 ring-offset-[var(--surface)]"
-                            : s.status === "past"
-                            ? "border-[var(--border)] bg-[var(--background-secondary)]"
-                            : "border-[var(--border)] bg-[var(--surface)]"
-                        }`}
-                      >
-                        <span
-                          className={`mb-2 h-2.5 w-2.5 rounded-full ${
-                            s.status === "future" ? "bg-[var(--border-hover)]" : "bg-[var(--foreground)]"
-                          }`}
-                        />
-                        <p
-                          className={`text-[12px] font-semibold leading-tight ${
-                            s.status === "future" ? "text-[var(--muted)]" : "text-[var(--foreground)]"
-                          }`}
-                        >
-                          {s.label}
-                        </p>
-                        <p className="mt-0.5 text-[10px] capitalize text-[var(--muted)]">{s.phase}</p>
-                      </div>
-                      {idx < semesters.length - 1 && (
-                        <div
-                          className={`h-px w-6 ${
-                            semesters[idx + 1].status === "past" || semesters[idx + 1].status === "current"
-                              ? "bg-[var(--foreground)]"
-                              : "bg-[var(--border)]"
-                          }`}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* MONTHS + WEEKS in two columns */}
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {/* ─── Current semester detail — months + weeks side by side ─── */}
+            <section className="mb-12 grid gap-6 lg:grid-cols-2">
+              {/* Months */}
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-                <p className="mb-5 text-[10.5px] font-medium uppercase tracking-wider text-[var(--muted)]">
-                  Months
+                <p className="mb-5 text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                  Months — {arc.semesterLabel}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className={`grid gap-2 ${months.length === 5 ? "grid-cols-5" : "grid-cols-3"}`}>
                   {months.map((m) => (
                     <div
                       key={m.label}
-                      className={`rounded-lg border px-3.5 py-2 text-[12.5px] font-medium ${
+                      className={`rounded-lg border px-2 py-3 text-center text-[12.5px] font-medium ${
                         m.status === "current"
                           ? "border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)]"
                           : m.status === "past"
@@ -202,18 +214,21 @@ export default function TimelineModal({
                           : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
                       }`}
                     >
-                      {m.label}
+                      {m.label.slice(0, 3)}
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Weeks */}
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
                 <div className="mb-5 flex items-baseline justify-between">
-                  <p className="text-[10.5px] font-medium uppercase tracking-wider text-[var(--muted)]">Weeks</p>
-                  <p className="text-[10.5px] text-[var(--muted)]">15 total</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">Weeks</p>
+                  <p className="text-[11px] text-[var(--muted)]">
+                    {weeks.filter((w) => w.status === "past").length} of {weeks.length} done
+                  </p>
                 </div>
-                <div className="grid grid-cols-8 gap-1.5">
+                <div className="grid grid-cols-15 gap-1.5" style={{ gridTemplateColumns: "repeat(15, minmax(0, 1fr))" }}>
                   {weeks.map((w) => (
                     <div
                       key={w.index}
@@ -231,27 +246,31 @@ export default function TimelineModal({
                   ))}
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Mission summary */}
-            <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-              <p className="text-[10.5px] font-medium uppercase tracking-wider text-[var(--muted)]">
+            {/* Mission summary — full width */}
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 sm:p-8">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
                 Mission this semester
               </p>
-              <p className="mt-2 text-[18px] font-semibold leading-snug text-[var(--foreground)]">
+              <p className="mt-2 text-[22px] font-semibold leading-snug tracking-tight text-[var(--foreground)] sm:text-[26px]">
                 {mission.title}
               </p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted-foreground)]">
+              <p className="mt-3 max-w-3xl text-[13.5px] leading-relaxed text-[var(--muted-foreground)]">
                 {mission.why}
               </p>
-              <p className="mt-3 border-t border-[var(--border)] pt-3 text-[12.5px] leading-relaxed text-[var(--muted-foreground)]">
-                <span className="font-medium text-[var(--foreground)]">What good looks like.</span>{" "}
-                {archetypeFor(profile, arc.phase === "grad" ? "senior" : arc.phase)}
-              </p>
-            </div>
+              <div className="mt-5 border-t border-[var(--border)] pt-5">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                  What good looks like
+                </p>
+                <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-[var(--muted-foreground)]">
+                  {archetypeFor(profile, arc.phase === "grad" ? "senior" : arc.phase)}
+                </p>
+              </div>
+            </section>
 
             {/* Footer breathing room */}
-            <div className="h-8" />
+            <div className="h-10" />
           </div>
         </div>
       </motion.div>
