@@ -1,16 +1,17 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowRight, Check, RefreshCcw, ClipboardList, BookOpen, Flame, Target,
+  ArrowRight, Check, RefreshCcw, Flame,
   Zap, MessageSquare, GraduationCap, School, ExternalLink, Users,
-  ChevronRight, Calendar, Briefcase,
+  Calendar,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import CampusNetworkCard from "@/components/CampusNetworkCard";
+import Arc from "@/components/dashboard/Arc";
+import TrajectoryChart from "@/components/dashboard/TrajectoryChart";
 import type { MonthlyTask } from "@/components/PlannerBoard";
 import { userStorage, setCurrentUserId } from "@/lib/user-storage";
 import { bumpStreak } from "@/lib/streak";
@@ -184,12 +185,19 @@ export default function DashboardPage() {
                 {greeting()}, {firstName}.
               </h1>
               <p className="mt-2 text-sm text-[var(--muted)]">
-                Three high-leverage moves today. Five minutes.
+                Plan the next 4 years so you don&apos;t have to scramble.
               </p>
             </header>
 
-            {/* The Pathway — horizontal timeline */}
-            <PathwayTimeline profile={data.profile} />
+            {/* The Arc + Trajectory */}
+            <div className="grid gap-5 lg:grid-cols-5">
+              <div className="lg:col-span-3">
+                <Arc profile={data.profile} />
+              </div>
+              <div className="lg:col-span-2">
+                <TrajectoryChart profile={data.profile} />
+              </div>
+            </div>
 
             {/* Daily Feed — 3 cards */}
             <section className="mt-10">
@@ -396,77 +404,6 @@ function CopyButton({ onClick, copied }: { onClick: () => void; copied: boolean 
       )}
     </motion.button>
   );
-}
-
-function PathwayTimeline({ profile }: { profile: any }) {
-  const year = profile?.yearOfStudy?.trim() || "Sophomore";
-  const uni = profile?.university?.trim() || "Your campus";
-  const dream = profile?.dreamRole?.trim() || "Your dream role";
-  const major = profile?.degree?.trim() || "your major";
-  const graduating = profile?.graduating?.trim() || "May 2028";
-  const internshipLabel = `Summer ${getInternshipYear(graduating)} internship`;
-
-  const steps = [
-    { label: year, sub: uni, status: "current" as const, icon: <School size={14} /> },
-    { label: internshipLabel, sub: "Reverse-engineered target", status: "next" as const, icon: <Briefcase size={14} /> },
-    { label: dream, sub: short(major), status: "goal" as const, icon: <Target size={14} /> },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
-      <div className="mb-4 flex items-center gap-2">
-        <Target size={14} className="text-[var(--accent)]" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">The Pathway</span>
-      </div>
-      <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
-        {steps.map((step, idx) => (
-          <div key={idx} className="contents">
-            <div
-              className={`flex items-start gap-3 rounded-xl border p-3 ${
-                step.status === "current"
-                  ? "border-[var(--accent)]/30 bg-[var(--accent-light)]"
-                  : step.status === "goal"
-                  ? "border-[var(--border)] bg-[var(--surface-secondary)]"
-                  : "border-[var(--border)] bg-[var(--surface)]"
-              }`}
-            >
-              <div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                  step.status === "current"
-                    ? "bg-[var(--accent)] text-white"
-                    : step.status === "goal"
-                    ? "bg-[var(--foreground)] text-[var(--background)]"
-                    : "bg-[var(--background-secondary)] text-[var(--muted-foreground)]"
-                }`}
-              >
-                {step.icon}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold leading-snug text-[var(--foreground)]">{step.label}</p>
-                <p className="mt-0.5 truncate text-[11px] text-[var(--muted)]">{step.sub}</p>
-              </div>
-            </div>
-            {idx < steps.length - 1 && (
-              <div className="hidden items-center justify-center md:flex">
-                <ChevronRight size={14} className="text-[var(--muted)]" />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function getInternshipYear(graduating: string): string {
-  const match = graduating.match(/(\d{4})/);
-  if (!match) return new Date().getFullYear() + 1 + "";
-  const gradYear = parseInt(match[1], 10);
-  return `${gradYear - 1}`;
-}
-
-function short(s: string, n = 38) {
-  return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
 function SemesterCard({
