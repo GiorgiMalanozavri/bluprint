@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
+import SkillTreeView from "@/components/dashboard/SkillTreeView";
 import AppShell from "@/components/AppShell";
 import CampusNetworkCard from "@/components/CampusNetworkCard";
 import Arc from "@/components/dashboard/Arc";
@@ -207,9 +208,11 @@ export default function DashboardPage() {
           <div className="animate-fade-up">
             <header className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-2">
               <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight">Your plan</h1>
+                <h1 className="text-[2rem] font-semibold tracking-tight">Skill Tree</h1>
                 <p className="mt-1.5 text-sm text-[var(--muted)]">
-                  {semesters.length > 0 ? `${semesters.length} semesters mapped out.` : "Your 4 year plan, semester by semester."}
+                  {semesters.length > 0
+                    ? "Navigate your branches. Unlock skills by proving completion to the AI."
+                    : "Your career skill tree, built from your roadmap."}
                 </p>
               </div>
               <button
@@ -223,27 +226,21 @@ export default function DashboardPage() {
 
             {semesters.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center">
-                <p className="text-sm font-medium text-[var(--foreground)]">Nothing here yet.</p>
-                <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your plan from onboarding.</p>
+                <p className="text-sm font-medium text-[var(--foreground)]">No skill tree yet.</p>
+                <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap from onboarding to build your tree.</p>
                 <button
                   type="button"
                   onClick={() => router.push("/onboarding")}
                   className="mt-5 btn-primary h-10 px-6 text-[13px]"
                 >
-                  Build my plan
+                  Build my tree
                 </button>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {semesters.map((s) => (
-                  <SemesterCard
-                    key={s.semester}
-                    semester={s}
-                    completed={completed}
-                    onToggle={toggleTask}
-                  />
-                ))}
-              </div>
+              <SkillTreeView
+                semesters={semesters}
+                dreamRole={data?.profile?.dreamRole}
+              />
             )}
           </div>
         )}
@@ -257,65 +254,5 @@ export default function DashboardPage() {
 function greeting() {
   const h = new Date().getHours();
   return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-}
-
-function SemesterCard({
-  semester,
-  completed,
-  onToggle,
-}: {
-  semester: Semester;
-  completed: string[];
-  onToggle: (id: string) => void;
-}) {
-  const done = semester.tasks.filter((t) => completed.includes(t.id)).length;
-  const total = semester.tasks.length;
-  return (
-    <div className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3">
-        <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">{semester.semester}</p>
-          <p className="mt-0.5 text-[10.5px] capitalize text-[var(--muted)]">{semester.status}</p>
-        </div>
-        {semester.status === "current" ? (
-          <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">Now</span>
-        ) : (
-          <span className="shrink-0 text-[10px] font-medium text-[var(--muted)]">{done}/{total}</span>
-        )}
-      </div>
-      <div className="flex-1 space-y-1 px-2 py-2">
-        {semester.tasks.length === 0 ? (
-          <p className="px-3 py-4 text-center text-[11.5px] text-[var(--muted)]">Open block. Add classes in Settings.</p>
-        ) : (
-          semester.tasks.map((task) => {
-            const isDone = completed.includes(task.id);
-            return (
-              <button
-                key={task.id}
-                type="button"
-                onClick={() => onToggle(task.id)}
-                className={`group flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
-                  isDone ? "opacity-50" : "hover:bg-[var(--surface-secondary)]"
-                }`}
-              >
-                <span
-                  className={`mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-colors ${
-                    isDone
-                      ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                      : "border-[var(--border-hover)] group-hover:border-[var(--accent)]"
-                  }`}
-                >
-                  {isDone && <Check size={9} strokeWidth={3.5} />}
-                </span>
-                <span className={`text-[11.5px] leading-snug ${isDone ? "text-[var(--muted)] line-through" : "text-[var(--foreground)]"}`}>
-                  {task.title}
-                </span>
-              </button>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
 }
 
