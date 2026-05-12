@@ -39,10 +39,10 @@ const FIRST_HOUR   = plannerHours[0];
 const LAST_HOUR    = plannerHours[plannerHours.length - 1];
 
 const TYPE_CONFIG = {
-  Class:    { icon: GraduationCap, card: "bg-blue-50 border-blue-100 text-[var(--foreground)]",    pill: "bg-blue-500 text-white",    bar: "bg-blue-500",    ring: "ring-blue-400"    },
-  Activity: { icon: Dumbbell,       card: "bg-sky-50 border-sky-100 text-[var(--foreground)]", pill: "bg-sky-500 text-white",  bar: "bg-sky-500",  ring: "ring-sky-400"  },
-  Study:    { icon: BookOpen,       card: "bg-violet-50 border-violet-100 text-[var(--foreground)]", pill: "bg-violet-500 text-white",  bar: "bg-violet-500",  ring: "ring-violet-400"  },
-  Work:     { icon: Briefcase,      card: "bg-emerald-50 border-emerald-100 text-[var(--foreground)]", pill: "bg-emerald-500 text-white", bar: "bg-emerald-500", ring: "ring-emerald-400" },
+  Class:    { icon: GraduationCap, card: "bg-[#eaf2ff] border-[#cce0ff] text-[#0055cc]",    pill: "bg-[#007aff] text-white",    bar: "bg-[#007aff]",    ring: "ring-[#007aff]/50"    },
+  Activity: { icon: Dumbbell,       card: "bg-[#ffeded] border-[#ffdbdc] text-[#cc0011]", pill: "bg-[#ff3b30] text-white",  bar: "bg-[#ff3b30]",  ring: "ring-[#ff3b30]/50"  },
+  Study:    { icon: BookOpen,       card: "bg-[#f5eeff] border-[#e8daff] text-[#6600cc]", pill: "bg-[#af52de] text-white",  bar: "bg-[#af52de]",  ring: "ring-[#af52de]/50"  },
+  Work:     { icon: Briefcase,      card: "bg-[#ebfbf3] border-[#c2f0d9] text-[#008844]", pill: "bg-[#34c759] text-white", bar: "bg-[#34c759]", ring: "ring-[#34c759]/50" },
 } as const;
 
 const REPEAT_LABELS: Record<PlannerEntry["repeat"], string> = {
@@ -430,12 +430,24 @@ function WeeklyGrid({ weekDates, entries, setEntries, editingId, setEditingId, e
   editingId: string | null; setEditingId: (id: string | null) => void; editable: boolean;
 }) {
   const colEls = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [ghost, setGhost] = useState<{ date: string; start: number; end: number } | null>(null);
   const [hoverInfo, setHoverInfo] = useState<{ date: string; hour: number } | null>(null);
   const [nowHour, setNowHour] = useState(currentDecimalHour());
   const todayISO = toISO(new Date());
 
   useEffect(() => { const id = setInterval(() => setNowHour(currentDecimalHour()), 60_000); return () => clearInterval(id); }, []);
+
+  useEffect(() => {
+    // Scroll to current hour (or 8 AM if it's too early/late) on mount
+    if (scrollRef.current) {
+      let targetHour = Math.floor(nowHour) - 1; // start 1 hour before current time
+      if (targetHour < FIRST_HOUR) targetHour = FIRST_HOUR;
+      if (targetHour > LAST_HOUR - 4) targetHour = LAST_HOUR - 4;
+      const topOffset = (targetHour - FIRST_HOUR) * HOUR_HEIGHT;
+      scrollRef.current.scrollTop = topOffset;
+    }
+  }, []);
 
   useEffect(() => {
     if (!editingId) return;
@@ -560,7 +572,7 @@ function WeeklyGrid({ weekDates, entries, setEntries, editingId, setEditingId, e
       )}
 
       {/* Main grid — scrollable */}
-      <div className="overflow-x-auto overflow-y-auto flex-1" style={{ overflow: "auto clip" }}>
+      <div ref={scrollRef} className="overflow-x-auto overflow-y-auto flex-1 scroll-smooth">
         <div style={{ minWidth: 600 }}>
           <div className="grid" style={{ gridTemplateColumns: cols, height: plannerHours.length * HOUR_HEIGHT }}>
             {/* Time labels */}
