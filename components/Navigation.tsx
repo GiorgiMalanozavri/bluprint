@@ -10,10 +10,11 @@ import { signout } from "@/actions/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import BrandWordmark from "./BrandWordmark";
 import { useTheme } from "@/lib/theme";
-import { getStreak, bumpStreak } from "@/lib/streak";
+import { getStreak } from "@/lib/streak";
 
 const appNavItems = [
   { href: "/dashboard",               label: "Overview",   tab: "overview" },
+  { href: "/planner",                 label: "Planner" },
   { href: "/dashboard?tab=roadmap",   label: "Roadmap",    tab: "roadmap"   },
   { href: "/settings",                label: "Settings" },
 ];

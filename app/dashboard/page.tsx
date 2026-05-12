@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, RefreshCcw, Users } from "lucide-react";
+import { Check, RefreshCcw } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import CampusNetworkCard from "@/components/CampusNetworkCard";
 import Arc from "@/components/dashboard/Arc";
@@ -160,17 +160,12 @@ export default function DashboardPage() {
       <div className="mx-auto w-full max-w-5xl">
         {tab === "overview" && (
           <div className="animate-fade-up">
-            {/* Greeting */}
-            <header className="pb-6 pt-2">
+            <header className="pb-8 pt-2">
               <h1 className="text-[2rem] font-semibold tracking-tight">
                 {greeting()}, {firstName}.
               </h1>
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                Plan the next 4 years so you don&apos;t have to scramble.
-              </p>
             </header>
 
-            {/* The Arc + Trajectory */}
             <div className="grid gap-5 lg:grid-cols-5">
               <div className="lg:col-span-3">
                 <Arc profile={data.profile} />
@@ -180,8 +175,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Semester Mission — the one big objective */}
-            <div className="mt-6">
+            <div className="mt-8">
               <SemesterMission
                 profile={data.profile}
                 doneTick={doneTick}
@@ -189,8 +183,7 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Weekly moves — derived directly from the mission */}
-            <div className="mt-8">
+            <div className="mt-10">
               <WeeklyMoves
                 profile={data.profile}
                 onChange={() => {
@@ -201,12 +194,10 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Campus Network — repositioned as small widget at bottom */}
             <section className="mt-10">
-              <div className="mb-3 flex items-baseline gap-2.5">
-                <Users size={14} className="text-[var(--muted)]" />
-                <h2 className="text-[12px] font-semibold uppercase tracking-wider text-[var(--muted)]">Peers on the same arc</h2>
-              </div>
+              <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                Peers on the same path
+              </h2>
               <CampusNetworkCard universityName={data.profile?.university} />
             </section>
           </div>
@@ -216,9 +207,9 @@ export default function DashboardPage() {
           <div className="animate-fade-up">
             <header className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-2">
               <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight">4-Year Vault</h1>
+                <h1 className="text-[2rem] font-semibold tracking-tight">Your plan</h1>
                 <p className="mt-1.5 text-sm text-[var(--muted)]">
-                  {semesters.length} semesters mapped to your trajectory.
+                  {semesters.length > 0 ? `${semesters.length} semesters mapped out.` : "Your 4 year plan, semester by semester."}
                 </p>
               </div>
               <button
@@ -232,14 +223,14 @@ export default function DashboardPage() {
 
             {semesters.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center">
-                <p className="text-sm font-medium text-[var(--foreground)]">Your vault is empty.</p>
-                <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap from onboarding.</p>
+                <p className="text-sm font-medium text-[var(--foreground)]">Nothing here yet.</p>
+                <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your plan from onboarding.</p>
                 <button
                   type="button"
                   onClick={() => router.push("/onboarding")}
                   className="mt-5 btn-primary h-10 px-6 text-[13px]"
                 >
-                  Build my roadmap
+                  Build my plan
                 </button>
               </div>
             ) : (
@@ -294,7 +285,7 @@ function SemesterCard({
       </div>
       <div className="flex-1 space-y-1 px-2 py-2">
         {semester.tasks.length === 0 ? (
-          <p className="px-3 py-4 text-center text-[11.5px] text-[var(--muted)]">Open block — add classes in Settings.</p>
+          <p className="px-3 py-4 text-center text-[11.5px] text-[var(--muted)]">Open block. Add classes in Settings.</p>
         ) : (
           semester.tasks.map((task) => {
             const isDone = completed.includes(task.id);

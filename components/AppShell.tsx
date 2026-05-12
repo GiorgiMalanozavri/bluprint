@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, Map, Settings } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Map, Settings } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard",               label: "Overview",   icon: LayoutDashboard, tab: "overview" },
+  { href: "/planner",                 label: "Planner",    icon: CalendarDays },
   { href: "/dashboard?tab=roadmap",   label: "Roadmap",    icon: Map,       tab: "roadmap"   },
   { href: "/settings",                label: "Settings",   icon: Settings },
 ];
@@ -32,7 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-xl sm:hidden">
-        <div className="grid grid-cols-3 gap-1 px-3 py-2">
+        <div className="grid grid-cols-4 gap-1 px-3 py-2">
           {navItems.map((item) => {
             const active = isActive(item);
             return (

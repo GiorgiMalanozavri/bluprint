@@ -96,11 +96,11 @@ export function getArcState(profile: any | null | undefined): ArcState {
   const semesterLabel = inSpring ? `Spring ${year}` : `Fall ${year}`;
 
   const blurbs: Record<Phase, string> = {
-    freshman: "Year 1 of 4. The compounding starts now — set foundations before life gets harder.",
-    sophomore: "The most leveraged year of your degree. First internship season is months away.",
-    junior: "Decision year. Internship offers convert to senior-year roles. Be visible.",
-    senior: "Final stretch. Land the offer; don't chase the GPA you already have.",
-    grad: "Specialize, publish, network up. Your committee matters more than your transcript.",
+    freshman: "Year 1. Build the habits and grades you'll lean on later.",
+    sophomore: "First internship season is coming up. Start early.",
+    junior: "The summer internship you land this year usually becomes your full time offer.",
+    senior: "Lock in the offer and line up backups.",
+    grad: "Pick a specialty and ship something public this year.",
   };
 
   return {
@@ -135,48 +135,32 @@ export const BENCHMARKS: Record<RoleKey, Benchmark> = {
     coursework: ["data structures", "algorithms", "operating systems", "databases", "computer networks", "software engineering"],
     skills: ["python", "javascript", "react", "sql", "git", "aws", "system design", "typescript"],
     byPhase: {
-      freshman: {
-        experiences: 1,
-        network: 2,
-        archetype: "Finished intro CS strong (A/A-). Built one personal project on GitHub. Joined a coding club.",
-      },
-      sophomore: {
-        experiences: 2,
-        network: 6,
-        archetype: "First internship or research role lined up. 2+ projects on GitHub. DM'd 5+ alumni.",
-      },
-      junior: {
-        experiences: 3,
-        network: 12,
-        archetype: "Brand-name internship done. Portfolio site live. Mentor in industry. Specialization picked.",
-      },
-      senior: {
-        experiences: 4,
-        network: 20,
-        archetype: "Return offer in hand. Open-source contribution. Capstone published. References lined up.",
-      },
-      grad: { experiences: 5, network: 25, archetype: "Research publication or staff-eng-track internship." },
+      freshman: { experiences: 1, network: 2, archetype: "Strong intro CS grades. One project on GitHub. In a coding club." },
+      sophomore: { experiences: 2, network: 6, archetype: "First internship or research role lined up. A couple of GitHub projects." },
+      junior: { experiences: 3, network: 12, archetype: "Did a brand name internship. Has a portfolio site and a mentor in the industry." },
+      senior: { experiences: 4, network: 20, archetype: "Return offer in hand. References ready." },
+      grad: { experiences: 5, network: 25, archetype: "A paper or a senior engineering internship." },
     },
   },
   finance: {
     coursework: ["financial accounting", "corporate finance", "statistics", "economics", "valuation", "financial modeling"],
     skills: ["excel", "powerpoint", "financial modeling", "valuation", "bloomberg", "dcf", "m&a", "capital markets"],
     byPhase: {
-      freshman: { experiences: 1, network: 3, archetype: "Joined finance club. Strong intro econ/accounting grades. First coffee chat done." },
-      sophomore: { experiences: 2, network: 10, archetype: "Sophomore Diversity / Spring Insight program lined up. 10+ alumni chats. WSO active." },
-      junior: { experiences: 3, network: 20, archetype: "Bulge bracket SA offer done. Modeling test prep finished. 2+ active mentors." },
-      senior: { experiences: 4, network: 30, archetype: "FT offer signed. Continuing to network for buy-side exits." },
-      grad: { experiences: 5, network: 35, archetype: "MBA-pipeline or PE/HF specialization." },
+      freshman: { experiences: 1, network: 3, archetype: "In a finance club. Solid grades in econ and accounting. One coffee chat done." },
+      sophomore: { experiences: 2, network: 10, archetype: "In a Sophomore Diversity or Spring Insight program. A few alumni chats a month." },
+      junior: { experiences: 3, network: 20, archetype: "Summer Analyst offer at a top bank. Modeling tests ready. Two mentors." },
+      senior: { experiences: 4, network: 30, archetype: "Full time offer signed. Still networking for buy-side moves." },
+      grad: { experiences: 5, network: 35, archetype: "MBA track or PE/HF specialty." },
     },
   },
   consulting: {
     coursework: ["statistics", "economics", "business strategy", "marketing", "behavioral economics", "operations"],
     skills: ["powerpoint", "excel", "case interviews", "structured thinking", "market sizing", "data analysis", "presentation"],
     byPhase: {
-      freshman: { experiences: 1, network: 3, archetype: "Joined consulting club. Cracked a few practice cases. Reached out to one consultant." },
-      sophomore: { experiences: 2, network: 10, archetype: "Sophomore summer experience (research/case comp/start-up). Casing 2x/week. 10+ chats." },
-      junior: { experiences: 3, network: 20, archetype: "MBB or Tier-2 SA offer. Case partner network. Leadership in a club." },
-      senior: { experiences: 4, network: 25, archetype: "FT offer in hand. Final-round practice for backups." },
+      freshman: { experiences: 1, network: 3, archetype: "In a consulting club. A few practice cases done. Reached out to one consultant." },
+      sophomore: { experiences: 2, network: 10, archetype: "A summer experience that ties to consulting. Practicing cases weekly." },
+      junior: { experiences: 3, network: 20, archetype: "MBB or Tier 2 Summer Associate offer. Case partner network in place." },
+      senior: { experiences: 4, network: 25, archetype: "Full time offer in hand. Final round prep for backups." },
       grad: { experiences: 5, network: 30, archetype: "MBA candidate or industry expert track." },
     },
   },
@@ -184,55 +168,55 @@ export const BENCHMARKS: Record<RoleKey, Benchmark> = {
     coursework: ["statics", "dynamics", "thermodynamics", "fluid mechanics", "materials science", "cad", "control systems", "manufacturing"],
     skills: ["solidworks", "matlab", "ansys", "cad tolerancing", "finite element analysis", "python", "manufacturing processes"],
     byPhase: {
-      freshman: { experiences: 1, network: 2, archetype: "Joined a design team (FSAE/AIAA). Built one CAD model in class. Found a research lab to email." },
-      sophomore: { experiences: 2, network: 6, archetype: "Lab assistant or first co-op. Design team contribution. 5+ industry chats." },
-      junior: { experiences: 3, network: 12, archetype: "Internship at known firm. Capstone topic chosen. SolidWorks/MATLAB strong." },
-      senior: { experiences: 4, network: 18, archetype: "Return offer or grad-school admit. Senior design project on portfolio." },
-      grad: { experiences: 5, network: 22, archetype: "Research thesis underway. Conference paper or patent in progress." },
+      freshman: { experiences: 1, network: 2, archetype: "On a design team. One CAD model from class. Found a lab to email." },
+      sophomore: { experiences: 2, network: 6, archetype: "First lab assistant role or co-op. Contributing to a design team." },
+      junior: { experiences: 3, network: 12, archetype: "Internship at a known firm. Strong with SolidWorks and MATLAB." },
+      senior: { experiences: 4, network: 18, archetype: "Return offer or grad school admit. Senior design project ready to show." },
+      grad: { experiences: 5, network: 22, archetype: "Thesis underway. Paper or patent in progress." },
     },
   },
   data: {
     coursework: ["statistics", "linear algebra", "probability", "machine learning", "databases", "data structures", "regression"],
     skills: ["python", "sql", "pandas", "tableau", "statistics", "machine learning", "r", "spark"],
     byPhase: {
-      freshman: { experiences: 1, network: 2, archetype: "Finished stats sequence. One Kaggle notebook public. Joined a data club." },
-      sophomore: { experiences: 2, network: 6, archetype: "First analytics internship or research assistantship. SQL fluent. 5+ chats." },
-      junior: { experiences: 3, network: 12, archetype: "ML/DS internship done. Portfolio with 2+ end-to-end projects. Mentor in industry." },
-      senior: { experiences: 4, network: 18, archetype: "Return offer or grad-school path. Capstone published. Open-source contrib." },
-      grad: { experiences: 5, network: 22, archetype: "Specialization (NLP/CV/RL). Co-authored paper underway." },
+      freshman: { experiences: 1, network: 2, archetype: "Finished stats. One public Kaggle notebook. In a data club." },
+      sophomore: { experiences: 2, network: 6, archetype: "First analytics internship or research role. Comfortable with SQL." },
+      junior: { experiences: 3, network: 12, archetype: "Data or ML internship done. Two end to end projects in a portfolio." },
+      senior: { experiences: 4, network: 18, archetype: "Return offer or grad school path. Capstone done." },
+      grad: { experiences: 5, network: 22, archetype: "Specialty picked. Co-authored paper underway." },
     },
   },
   marketing: {
     coursework: ["marketing", "consumer behavior", "statistics", "communications", "psychology", "digital marketing", "analytics"],
     skills: ["google analytics", "seo", "copywriting", "content strategy", "hubspot", "a/b testing", "figma"],
     byPhase: {
-      freshman: { experiences: 1, network: 2, archetype: "Ran a social account for a club. Started a side blog or newsletter." },
+      freshman: { experiences: 1, network: 2, archetype: "Ran a club social account. Started a small blog or newsletter." },
       sophomore: { experiences: 2, network: 6, archetype: "Marketing internship or agency role lined up. Google Analytics certified." },
-      junior: { experiences: 3, network: 12, archetype: "Brand-name internship done. Portfolio of campaigns/copy. Leadership in a club." },
-      senior: { experiences: 4, network: 18, archetype: "Return offer or APM/marketing-rotation track." },
-      grad: { experiences: 5, network: 22, archetype: "Brand marketing or growth specialization." },
+      junior: { experiences: 3, network: 12, archetype: "Did a brand name internship. Has a portfolio of campaigns." },
+      senior: { experiences: 4, network: 18, archetype: "Return offer or rotation program track." },
+      grad: { experiences: 5, network: 22, archetype: "Brand or growth specialty." },
     },
   },
   preMed: {
     coursework: ["biology", "general chemistry", "organic chemistry", "physics", "biochemistry", "psychology", "sociology", "statistics"],
     skills: ["clinical exposure", "research methods", "patient interaction", "lab techniques", "mcat prep", "scientific writing"],
     byPhase: {
-      freshman: { experiences: 1, network: 3, archetype: "Shadowed once. Started volunteering. Pre-med advisor on board." },
-      sophomore: { experiences: 2, network: 8, archetype: "Research lab joined. 100+ clinical hours. Pre-med org membership." },
-      junior: { experiences: 3, network: 14, archetype: "200+ clinical hours. MCAT prep underway. 3+ rec-letter relationships." },
-      senior: { experiences: 4, network: 20, archetype: "MCAT done. AMCAS submitted. Strong rec letters secured." },
-      grad: { experiences: 5, network: 25, archetype: "Med school + residency planning." },
+      freshman: { experiences: 1, network: 3, archetype: "Shadowed once. Started volunteering. Met with the pre-med advisor." },
+      sophomore: { experiences: 2, network: 8, archetype: "In a research lab. 100+ clinical hours logged." },
+      junior: { experiences: 3, network: 14, archetype: "200+ clinical hours. MCAT prep underway. Three rec letter relationships." },
+      senior: { experiences: 4, network: 20, archetype: "MCAT done. AMCAS submitted. Rec letters secured." },
+      grad: { experiences: 5, network: 25, archetype: "Med school and residency planning." },
     },
   },
   default: {
     coursework: ["college writing", "statistics", "intro to your major", "calculus"],
     skills: ["communication", "leadership", "writing", "data literacy", "presentation"],
     byPhase: {
-      freshman: { experiences: 1, network: 2, archetype: "Joined a club. Strong first-year GPA. Met one mentor." },
-      sophomore: { experiences: 2, network: 6, archetype: "First internship or research role. 5+ alumni chats." },
-      junior: { experiences: 3, network: 12, archetype: "Strong internship. Mentor relationship. Leadership role." },
+      freshman: { experiences: 1, network: 2, archetype: "In a club. Solid first year GPA. Met one mentor." },
+      sophomore: { experiences: 2, network: 6, archetype: "First internship or research role. A handful of alumni chats." },
+      junior: { experiences: 3, network: 12, archetype: "A strong internship. A real mentor. A leadership role somewhere." },
       senior: { experiences: 4, network: 18, archetype: "Offer in hand. References lined up." },
-      grad: { experiences: 5, network: 22, archetype: "Specialization clear. Thesis or capstone underway." },
+      grad: { experiences: 5, network: 22, archetype: "Specialty clear. Thesis or capstone underway." },
     },
   },
 };
@@ -289,49 +273,53 @@ export function getTrajectory(profile: any | null | undefined): Trajectory {
   const rows: TrajectoryRow[] = [
     {
       key: "coursework",
-      label: "Coursework alignment",
+      label: "Classes",
       score: courseScore,
       target: courseTarget,
       status: status(courseScore, courseTarget),
-      advice: courseScore >= courseTarget
-        ? `You've covered the foundations for your target role. Pick electives that extend depth.`
-        : `Missing key foundations: ${bench.coursework
-            .filter((c) => !completedCourses.some((cc) => cc.toLowerCase().includes(c.toLowerCase())))
-            .slice(0, 2)
-            .join(", ")}. Plan them in.`,
+      advice:
+        courseScore >= courseTarget
+          ? `You have the basics covered. Use electives to go deeper.`
+          : `Plan these in: ${bench.coursework
+              .filter((c) => !completedCourses.some((cc) => cc.toLowerCase().includes(c.toLowerCase())))
+              .slice(0, 2)
+              .join(", ")}.`,
     },
     {
       key: "experiences",
-      label: "First-hand experiences",
+      label: "Experience",
       score: expCount,
       target: expTarget,
       status: status(expCount, expTarget),
-      advice: expCount >= expTarget
-        ? `On track. Aim for one role each year that's harder than the last.`
-        : `By end of ${PHASE_LABELS[arc.phase]}, peers in your lane have ${expTarget}. The gap to close: ${expTarget - expCount}.`,
+      advice:
+        expCount >= expTarget
+          ? `On track. Each year, aim for something harder than the last.`
+          : `By the end of ${PHASE_LABELS[arc.phase]} year, students in your lane usually have ${expTarget}. You have ${expCount}.`,
     },
     {
       key: "network",
-      label: "Network density",
+      label: "Network",
       score: networkScore,
       target: networkTarget,
       status: status(networkScore, networkTarget),
-      advice: networkScore >= networkTarget
-        ? `You're well-connected. Convert chats into mentor relationships.`
-        : `Most students who land your target role have ${networkTarget} meaningful connections by now. You're at ${networkScore}.`,
+      advice:
+        networkScore >= networkTarget
+          ? `Plenty of contacts. Turn a few into real mentor relationships.`
+          : `Most students who land this role have around ${networkTarget} contacts by now. You have ${networkScore}.`,
     },
     {
       key: "skills",
-      label: "Portfolio-ready skills",
+      label: "Skills",
       score: skillScore,
       target: skillTarget,
       status: status(skillScore, skillTarget),
-      advice: skillScore >= skillTarget
-        ? `Strong stack. Pick one to go deep on this semester.`
-        : `Add: ${bench.skills
-            .filter((s) => !profileSkills.some((ps) => ps.toLowerCase().includes(s.toLowerCase())))
-            .slice(0, 3)
-            .join(", ")}.`,
+      advice:
+        skillScore >= skillTarget
+          ? `Good stack. Pick one to go deep on this term.`
+          : `Add: ${bench.skills
+              .filter((s) => !profileSkills.some((ps) => ps.toLowerCase().includes(s.toLowerCase())))
+              .slice(0, 3)
+              .join(", ")}.`,
     },
   ];
 
