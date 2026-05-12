@@ -3,9 +3,10 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon, ThumbsUp, X as XIcon, Star, BookOpen, Flame, Target, Clock, TrendingUp, AlertCircle, Zap, MessageSquare, GraduationCap, School, ExternalLink } from "lucide-react";
+import { ArrowRight, Check, Loader2, RefreshCcw, Sparkles, Send, Bot, User as UserIcon, Calendar, ClipboardList, Map as MapIcon, ThumbsUp, X as XIcon, Star, BookOpen, Flame, Target, Clock, TrendingUp, AlertCircle, Zap, MessageSquare, GraduationCap, School, ExternalLink, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/AppShell";
+import CampusNetworkCard from "@/components/CampusNetworkCard";
 import type { MonthlyTask } from "@/components/PlannerBoard";
 import { userStorage, setCurrentUserId } from "@/lib/user-storage";
 
@@ -390,6 +391,18 @@ export default function DashboardPage() {
                   </button>
                 </PathwayCard>
               </div>
+            </section>
+
+            {/* — Campus Network — */}
+            <section className="mb-12">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <Users size={16} className="text-[var(--accent)]" />
+                <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Campus Network</h2>
+              </div>
+              <p className="mb-5 text-[12px] text-[var(--muted)]">
+                Connect with peers at your school who are on the same trajectory.
+              </p>
+              <CampusNetworkCard universityName={data.profile?.university} />
             </section>
 
             {/* — Weekly Sync — */}
