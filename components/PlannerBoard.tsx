@@ -179,7 +179,7 @@ function EventPopover({ entry, onClose, onUpdate, onDelete, onRepeatChange }: {
   const saveTitle = () => { if (title !== entry.title) onUpdate({ title }); };
 
   return (
-    <div className="w-80 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} data-popover>
+    <div className="w-full rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl overflow-hidden" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} data-popover>
       <div className={`h-1.5 ${cfg.bar}`} />
       <div className="p-5 space-y-4">
         {/* Title */}
@@ -392,34 +392,20 @@ function EventCard({ entry, top, height, isEditing, setEditingId, onUpdate, onDe
         </button>
       </div>
 
-      {isEditing && typeof document !== "undefined" && (() => {
-        const cardRect = cardRef.current?.getBoundingClientRect();
-        const gridRect = colEl?.closest<HTMLElement>("[data-grid]")?.getBoundingClientRect();
-        if (!cardRect) return null;
-
-        const isRightHalf = gridRect ? (cardRect.left - gridRect.left) > gridRect.width * 0.5 : false;
-        const fixedTop = Math.max(80, Math.min(cardRect.top, window.innerHeight - 500));
-        const fixedStyle: React.CSSProperties = {
-          position: "fixed",
-          top: fixedTop,
-          ...(isRightHalf
-            ? { right: window.innerWidth - cardRect.left + 14 }
-            : { left: cardRect.right + 14 }),
-          zIndex: 9999,
-        };
-
-        return createPortal(
-          <motion.div initial={{ opacity: 0, scale: 0.93, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.93, y: -4 }} transition={{ duration: 0.13 }}
-            style={fixedStyle}
-            data-popover>
+      {isEditing && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/10 backdrop-blur-sm flex items-center justify-center p-4" 
+             onPointerDown={() => setEditingId(null)} data-popover>
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.15 }}
+            className="w-full max-w-[340px]"
+            onPointerDown={(e) => e.stopPropagation()}>
             <EventPopover entry={entry} onClose={() => setEditingId(null)}
               onUpdate={(u) => onUpdate(entry.id, u)} onDelete={() => { onDelete(entry.id); setEditingId(null); }}
               onRepeatChange={onRepeatChange} />
-          </motion.div>,
-          document.body
-        );
-      })()}
+          </motion.div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
