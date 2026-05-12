@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { RefreshCcw } from "lucide-react";
+
 import SkillTreeView from "@/components/dashboard/SkillTreeView";
 import AppShell from "@/components/AppShell";
 import CampusNetworkCard from "@/components/CampusNetworkCard";
@@ -159,29 +159,16 @@ export default function DashboardPage() {
   return (
     <AppShell>
       {tab === "roadmap" ? (
-        <div className="w-full animate-fade-up px-2 sm:px-4">
-          <div className="flex flex-wrap items-end justify-between gap-4 pb-4 pt-2 max-w-5xl mx-auto">
-            <div>
-              <h1 className="text-[1.5rem] font-semibold tracking-tight">Skill Tree</h1>
-              <p className="mt-1 text-[12px] text-[var(--muted)]">
-                {semesters.length > 0
-                  ? "Navigate branches. Click available nodes to verify completion."
-                  : "Your career skill tree, built from your roadmap."}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push("/onboarding")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
-            >
-              <RefreshCcw size={12} /> Regenerate
-            </button>
+        <div className="relative w-full h-[calc(100vh-var(--topbar-height))] overflow-hidden">
+          {/* Centered title */}
+          <div className="text-center pt-3 pb-1">
+            <h1 className="text-[1.25rem] font-semibold tracking-tight text-[var(--foreground)]">Skill Tree</h1>
           </div>
 
           {semesters.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center max-w-5xl mx-auto">
+            <div className="flex flex-col items-center justify-center h-[60%]">
               <p className="text-sm font-medium text-[var(--foreground)]">No skill tree yet.</p>
-              <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap from onboarding to build your tree.</p>
+              <p className="mt-1.5 text-xs text-[var(--muted)]">Generate your roadmap to build your tree.</p>
               <button type="button" onClick={() => router.push("/onboarding")}
                 className="mt-5 btn-primary h-10 px-6 text-[13px]">
                 Build my tree
