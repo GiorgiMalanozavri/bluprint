@@ -1,333 +1,66 @@
 "use client";
 
+import { ArrowRight, Compass } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { ArrowRight, FileText, Map, Calendar, Sparkles, CheckCircle2, BarChart3, Clock, Check, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getProfile } from "@/lib/storage";
 
-export default function HomePage() {
+export default function Landing() {
+  const router = useRouter();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const p = getProfile();
+    if (p) {
+      router.replace("/dashboard");
+    } else {
+      setChecked(true);
+    }
+  }, [router]);
+
+  if (!checked) {
+    return <div className="min-h-screen bg-[var(--background)]" />;
+  }
+
   return (
-    <div className="bg-[var(--background)] pt-14 text-[var(--foreground)]">
-      {/* Hero */}
-      <section className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center px-6 text-center">
-        <div className="animate-fade-up max-w-2xl">
-          <h1 className="text-[2.75rem] font-semibold leading-[1.08] tracking-tight text-balance sm:text-[3.5rem] md:text-[4.25rem]">
-            Your career,<br />planned clearly.
-          </h1>
-          <p className="mt-6 mx-auto max-w-md text-lg leading-relaxed text-[var(--muted)]">
-            bluprint helps international students plan internships, CVs, and applications, semester by semester.
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Link href="/sign-up" className="btn-primary h-12 px-8 text-[15px]">
-              Get started free <ArrowRight size={16} />
-            </Link>
-            <Link href="/sign-in" className="btn-ghost h-12 px-6 text-[15px]">
-              Log in
-            </Link>
-          </div>
-          <p className="mt-6 text-sm text-[var(--muted)]">Free to start &middot; No credit card</p>
-        </div>
-      </section>
-
-      {/* App preview mockup */}
-      <section className="page-frame pb-20">
-        <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden">
-            {/* Fake browser bar */}
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-[var(--border)] bg-[var(--surface-secondary)]">
-              <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-[var(--border-hover)]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[var(--border-hover)]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[var(--border-hover)]" />
-              </div>
-              <div className="flex-1 mx-8 h-6 rounded-lg bg-[var(--background)] flex items-center justify-center">
-                <span className="text-[10px] text-[var(--muted)] font-medium">bluprint.app/dashboard</span>
-              </div>
-            </div>
-            {/* Dashboard mockup content */}
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-8 w-8 rounded-full bg-[var(--accent)] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">J</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Good morning, Jordan.</p>
-                  <p className="text-[11px] text-[var(--muted)]">3 tasks due this week</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                  <Calendar size={16} className="text-[var(--accent)] mb-2" />
-                  <p className="text-xs font-semibold">Planner</p>
-                  <p className="text-[10px] text-[var(--muted)]">Weekly schedule</p>
-                </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                  <BarChart3 size={16} className="text-[var(--accent)] mb-2" />
-                  <p className="text-xs font-semibold">CV Score</p>
-                  <p className="text-[10px] text-[var(--muted)]">78 / 100</p>
-                </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
-                  <Sparkles size={16} className="text-[var(--accent)] mb-2" />
-                  <p className="text-xs font-semibold">AI Assist</p>
-                  <p className="text-[10px] text-[var(--muted)]">Ask anything</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {["Apply to 3 summer internships", "Update CV with new project", "Prepare for mock interview"].map((task, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-[var(--background)]/60">
-                    <div className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center shrink-0 ${i === 0 ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border-hover)]"}`}>
-                      {i === 0 && <CheckCircle2 size={10} className="text-white" />}
-                    </div>
-                    <span className={`text-xs font-medium ${i === 0 ? "line-through text-[var(--muted)]" : ""}`}>{task}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="page-frame pb-20">
-        <div className="mx-auto max-w-3xl text-center mb-12">
-          <h2 className="text-[2rem] font-semibold tracking-tight">How it works</h2>
-          <p className="mt-3 text-[var(--muted)]">Three steps to your personalized career plan.</p>
+    <main className="min-h-screen bg-[var(--background)]">
+      <div className="mx-auto flex max-w-2xl flex-col items-center px-5 pb-16 pt-24 text-center sm:px-8 sm:pt-32">
+        <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--foreground)] text-[var(--background)]">
+          <Compass size={22} strokeWidth={2.5} />
         </div>
 
-        <div className="mx-auto max-w-4xl grid gap-8 md:grid-cols-3 items-start">
-          <StepCard1 />
-          <StepCard2 />
-          <StepCard3 />
+        <h1 className="text-[40px] font-semibold leading-[1.05] tracking-tight text-[var(--foreground)] sm:text-[52px]">
+          Course planning,<br />done right.
+        </h1>
+
+        <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[var(--muted-foreground)]">
+          Compass is the course companion for CWRU mechanical & aerospace engineering students.
+          Real grade distributions, peer tips, and a roadmap built for you.
+        </p>
+
+        <Link
+          href="/onboarding"
+          className="mt-10 inline-flex items-center gap-2 rounded-xl bg-[var(--foreground)] px-6 py-3 text-[14px] font-semibold text-[var(--background)] transition-opacity hover:opacity-90"
+        >
+          Get started <ArrowRight size={14} />
+        </Link>
+
+        <div className="mt-16 grid w-full max-w-xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
+          <Feature title="Real grades" body="See past distributions on every MAE course." />
+          <Feature title="Peer tips" body="What to study, who to email, what to skip." />
+          <Feature title="Your roadmap" body="A semester plan tailored to your goals." />
         </div>
-      </section>
-
-      {/* Features row */}
-      <section className="page-frame pb-32">
-        <div className="mx-auto max-w-4xl grid gap-4 md:grid-cols-2">
-          {/* AI sidebar feature */}
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 shadow-[var(--shadow-card)]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-[var(--accent)] flex items-center justify-center">
-                <Sparkles size={16} className="text-white" />
-              </div>
-              <div>
-                <h3 className="text-[15px] font-semibold">AI assistant on every page</h3>
-                <p className="text-[11px] text-[var(--muted)]">Ask questions, get career advice, add events</p>
-              </div>
-            </div>
-            <div className="rounded-xl bg-[var(--background)] border border-[var(--border)] p-4 space-y-3">
-              <div className="flex gap-2.5 justify-end">
-                <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-3 py-2 text-xs max-w-[180px]">
-                  Help me prepare for my Goldman Sachs interview
-                </div>
-              </div>
-              <div className="flex gap-2.5">
-                <div className="h-6 w-6 rounded-full bg-[var(--accent)] flex items-center justify-center shrink-0">
-                  <Sparkles size={10} className="text-white" />
-                </div>
-                <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-3 py-2 text-xs text-[var(--muted)] max-w-[200px]">
-                  Here are the top 5 behavioral questions Goldman asks...
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* CV analyzer feature */}
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 shadow-[var(--shadow-card)]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center">
-                <BarChart3 size={16} className="text-white" />
-              </div>
-              <div>
-                <h3 className="text-[15px] font-semibold">Smart CV analysis</h3>
-                <p className="text-[11px] text-[var(--muted)]">Get a recruiter&apos;s perspective on your resume</p>
-              </div>
-            </div>
-            <div className="rounded-xl bg-[var(--background)] border border-[var(--border)] p-4">
-              <div className="flex items-center gap-4 mb-3">
-                <div className="relative h-14 w-14 shrink-0">
-                  <svg className="h-full w-full rotate-[-90deg]" viewBox="0 0 100 100">
-                    <circle className="text-[var(--background-secondary)]" strokeWidth="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                    <circle className="text-emerald-500" strokeWidth="8" strokeDasharray={251} strokeDashoffset={251 - (251 * 78) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-bold">78</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-emerald-500 uppercase">Strong</p>
-                  <p className="text-[11px] text-[var(--muted)]">Your CV is competitive for most roles</p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-[11px]">
-                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                  <span className="text-[var(--muted)]">Clear quantified impact</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px]">
-                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                  <span className="text-[var(--muted)]">Strong action verbs</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </div>
+      </div>
+    </main>
   );
 }
 
-/* ── Interactive Step Cards ────────────────────────────────────────────── */
-
-const CARD_HEIGHT = "h-[220px]";
-
-function StepCard1() {
-  const [uploaded, setUploaded] = useState(false);
-
+function Feature({ title, body }: { title: string; body: string }) {
   return (
-    <div className="text-center group">
-      <div
-        className={`mx-auto mb-6 w-full rounded-2xl border bg-[var(--surface)] shadow-[var(--shadow-card)] overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-[var(--shadow-md)] hover:border-[var(--accent)]/30 ${CARD_HEIGHT} flex flex-col justify-center ${
-          uploaded ? "border-emerald-300" : "border-[var(--border)]"
-        }`}
-        onClick={() => setUploaded(!uploaded)}
-      >
-        <div className="p-6 flex flex-col items-center">
-          {!uploaded ? (
-            <>
-              <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-[var(--border-hover)] flex items-center justify-center mb-4 group-hover:border-[var(--accent)] transition-colors">
-                <Upload size={22} className="text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors" />
-              </div>
-              <p className="text-xs font-semibold mb-1">Drop your CV here</p>
-              <p className="text-[10px] text-[var(--muted)]">Click to simulate upload</p>
-            </>
-          ) : (
-            <>
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
-                <Check size={24} className="text-emerald-600" />
-              </div>
-              <p className="text-xs font-semibold mb-1">resume_2026.pdf</p>
-              <div className="w-full mt-2 space-y-1.5">
-                <div className="h-1.5 rounded-full bg-[var(--accent)] w-full transition-all duration-700" />
-                <div className="h-1.5 rounded-full bg-[var(--accent-mid)] w-3/4 mx-auto transition-all duration-700 delay-100" />
-              </div>
-              <p className="mt-3 text-[10px] text-emerald-600 font-medium flex items-center gap-1">
-                <CheckCircle2 size={10} /> Profile extracted
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-      <span className="text-xs font-mono font-medium text-[var(--accent)]">01</span>
-      <h3 className="mt-1 text-[15px] font-semibold">Upload your CV</h3>
-      <p className="mt-1.5 text-sm text-[var(--muted)] leading-relaxed">bluprint extracts your experience and asks you to confirm the details.</p>
-    </div>
-  );
-}
-
-function StepCard2() {
-  const [activeSem, setActiveSem] = useState(0);
-  const semesters = [
-    { label: "Semester 1", tasks: 4 },
-    { label: "Semester 2", tasks: 6 },
-    { label: "Semester 3", tasks: 3 },
-    { label: "Semester 4", tasks: 5 },
-  ];
-
-  return (
-    <div className="text-center">
-      <div className={`mx-auto mb-6 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 hover:shadow-[var(--shadow-md)] hover:border-[var(--accent)]/30 ${CARD_HEIGHT} flex flex-col`}>
-        <div className="p-6 flex-1 flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <Map size={14} className="text-[var(--accent)]" />
-            <span className="text-xs font-semibold">Roadmap</span>
-          </div>
-          <div className="space-y-1.5 flex-1">
-            {semesters.map((sem, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveSem(i)}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 transition-all duration-200 text-left ${
-                  activeSem === i ? "bg-[var(--accent-light)]" : "hover:bg-[var(--surface-secondary)]"
-                }`}
-              >
-                <div className={`w-2 h-2 rounded-full shrink-0 transition-colors ${activeSem === i ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`} />
-                <span className={`text-[11px] font-medium transition-colors ${activeSem === i ? "text-[var(--accent)]" : ""}`}>{sem.label}</span>
-                {activeSem === i && (
-                  <span className="ml-auto rounded-full bg-[var(--accent)] px-1.5 py-[1px] text-[7px] font-bold text-white tracking-wide">
-                    {sem.tasks} TASKS
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 h-1.5 rounded-full bg-[var(--background-secondary)]">
-            <div
-              className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
-              style={{ width: `${((activeSem + 1) / semesters.length) * 100}%` }}
-            />
-          </div>
-        </div>
-      </div>
-      <span className="text-xs font-mono font-medium text-[var(--accent)]">02</span>
-      <h3 className="mt-1 text-[15px] font-semibold">Get your roadmap</h3>
-      <p className="mt-1.5 text-sm text-[var(--muted)] leading-relaxed">See what to do now, what can wait, and why each step matters.</p>
-    </div>
-  );
-}
-
-function StepCard3() {
-  const [tasks, setTasks] = useState([
-    { label: "Apply to internships", done: false },
-    { label: "Update LinkedIn", done: false },
-    { label: "Mock interview prep", done: false },
-    { label: "Network with alumni", done: false },
-  ]);
-
-  const doneCount = tasks.filter((t) => t.done).length;
-
-  const toggle = (idx: number) => {
-    setTasks((prev) => prev.map((t, i) => (i === idx ? { ...t, done: !t.done } : t)));
-  };
-
-  return (
-    <div className="text-center">
-      <div className={`mx-auto mb-6 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 hover:shadow-[var(--shadow-md)] hover:border-[var(--accent)]/30 ${CARD_HEIGHT} flex flex-col`}>
-        <div className="p-6 flex-1 flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock size={14} className="text-[var(--accent)]" />
-            <span className="text-xs font-semibold">This Month</span>
-            <span className="ml-auto text-[10px] text-[var(--muted)] tabular-nums">{doneCount}/{tasks.length} done</span>
-          </div>
-          <div className="space-y-1 flex-1">
-            {tasks.map((t, i) => (
-              <button
-                key={i}
-                onClick={() => toggle(i)}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-all duration-200 text-left ${
-                  t.done ? "opacity-50" : "hover:bg-[var(--surface-secondary)]"
-                }`}
-              >
-                <div className={`w-3.5 h-3.5 rounded border-[1.5px] flex items-center justify-center shrink-0 transition-all duration-200 ${
-                  t.done ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border-hover)]"
-                }`}>
-                  {t.done && <Check size={8} className="text-white" strokeWidth={3} />}
-                </div>
-                <span className={`text-[11px] font-medium transition-all duration-200 ${t.done ? "line-through text-[var(--muted)]" : ""}`}>{t.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="mt-2 h-1.5 rounded-full bg-[var(--background-secondary)]">
-            <div
-              className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
-              style={{ width: `${(doneCount / tasks.length) * 100}%` }}
-            />
-          </div>
-        </div>
-      </div>
-      <span className="text-xs font-mono font-medium text-[var(--accent)]">03</span>
-      <h3 className="mt-1 text-[15px] font-semibold">Track your progress</h3>
-      <p className="mt-1.5 text-sm text-[var(--muted)] leading-relaxed">Your dashboard turns the big plan into a monthly action list.</p>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <p className="text-[13px] font-semibold text-[var(--foreground)]">{title}</p>
+      <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted-foreground)]">{body}</p>
     </div>
   );
 }
